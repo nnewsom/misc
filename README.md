@@ -1,2 +1,2 @@
 # misc
-misc configs and scripts that I don't want to have to recreate
+misc configs and scripts
