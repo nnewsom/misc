@@ -6,7 +6,7 @@
   extra_styling = False
   title_inactive_bg_color = "#969896"
   title_inactive_fg_color = "#c5c8c6"
-  title_transmit_bg_color = "#1d1f21"
+  title_transmit_bg_color = "#555753"
   title_transmit_fg_color = "#c5c8c6"
 [keybindings]
 [layouts]
