@@ -34,8 +34,8 @@ floating_modifier $mod
 
 # start a terminal
 #bindsym $mod+Shift+Return exec i3-sensible-terminal
-bindsym $mod+Shift+Return exec urxvt
-#bindsym $mod+Shift+Return exec xfce4-terminal
+# bindsym $mod+Shift+Return exec urxvt
+bindsym $mod+Shift+Return exec xfce4-terminal
 bindsym $mod+Return exec terminator -u
 #bindsym $mod+Return exec urxvt
 
@@ -103,18 +103,22 @@ set $workspace1 "1"
 set $workspace2 "2"
 set $workspace3 "3"
 set $workspace4 "4"
-set $workspace9 "9"
-set $workspace10 "10"
+set $workspace5 "5"
+set $workspace6 "6"
+set $workspace7 "7: vlc"
+set $workspace8 "8: bn"
+set $workspace9 "9: burp"
+set $workspace10 "10: kpx"
 
 # switch to workspace
 bindsym $mod+1 workspace $workspace1
 bindsym $mod+2 workspace $workspace2
 bindsym $mod+3 workspace $workspace3
 bindsym $mod+4 workspace $workspace4
-bindsym $mod+5 workspace 5
-bindsym $mod+6 workspace 6
-bindsym $mod+7 workspace 7
-bindsym $mod+8 workspace 8
+bindsym $mod+5 workspace $workspace5
+bindsym $mod+6 workspace $workspace6
+bindsym $mod+7 workspace $workspace7
+bindsym $mod+8 workspace $workspace8
 bindsym $mod+9 workspace $workspace9
 bindsym $mod+0 workspace $workspace10
 
@@ -123,17 +127,22 @@ bindsym $mod+Shift+1 move container to workspace $workspace1
 bindsym $mod+Shift+2 move container to workspace $workspace2
 bindsym $mod+Shift+3 move container to workspace $workspace3
 bindsym $mod+Shift+4 move container to workspace $workspace4
-bindsym $mod+Shift+5 move container to workspace 5
-bindsym $mod+Shift+6 move container to workspace 6
-bindsym $mod+Shift+7 move container to workspace 7
-bindsym $mod+Shift+8 move container to workspace 8
+bindsym $mod+Shift+5 move container to workspace $workspace5
+bindsym $mod+Shift+6 move container to workspace $workspace6
+bindsym $mod+Shift+7 move container to workspace $workspace7
+bindsym $mod+Shift+8 move container to workspace $workspace8
 bindsym $mod+Shift+9 move container to workspace $workspace9
 bindsym $mod+Shift+0 move container to workspace $workspace10
 
-# assign [class="Chromium-browser"] $workspace2
+# workspace assign
+# [class="Chromium-browser"] $workspace2
+assign [class="vlc"] $workspace7
+assign [class="Binary Ninja"] $workspace8
+assign [class="burp-StartBurp"] $workspace9
 assign [class="Keepassx"] $workspace10
-assign [class="vlc"] $workspace9
 
+# float
+for_window [class="*Burp*"] floating enable
 
 # reload the configuration file
 bindsym $mod+Shift+c reload
@@ -187,7 +196,7 @@ hide_edge_borders both
 # finds out, if available)
 bar {
 #        status_command i3status
-        status_command i3blocks -c /home/user/.config/i3/i3blocks.conf
+        status_command i3blocks -c "$HOME/.config/i3/i3blocks.conf"
         tray_output primary
         colors {
                 background $bg-color
@@ -202,15 +211,18 @@ bar {
 
 # settings/background
 exec --no-startup-id synclient TouchpadOff=1
-exec --no-startup-id xautolock -secure -time 5 -locker "/path/to/lockscreen/script.sh"
+exec --no-startup-id xautolock -secure -time 5 -locker "$HOME/scripts/lock_screen.sh"
 exec --no-startup-id redshift -t 3500:5500 -b 1.0:0.8 -l 37:121
+exec --no-startup-id ssh-add
 
-exec_always --no-startup-id feh --bg-max /path/to/wallpaper
+exec_always --no-startup-id feh --bg-max "$HOME/.wallpaper"
 exec_always --no-startup-id compton 
 
 # shortcuts
 bindsym $mod+Shift+x exec i3lock --color "$bg-color"
-bindsym $mod+u exec --no-startup-id /some/command -with-options
+bindsym $mod+u exec --no-startup-id "$HOME/scripts/empty_chrome.sh"
+bindsym $mod+b exec --no-startup-id "$HOME/scripts/start_burp.sh"
+bindsym $mod+y exec --no-startup-id "$HOME/tools/binaryninja/binaryninja"
 
 # Volume controls
 bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume 0 +5%
