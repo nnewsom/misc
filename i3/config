@@ -212,7 +212,7 @@ bar {
 # settings/background
 exec --no-startup-id synclient TouchpadOff=1
 exec --no-startup-id nm-applet
-exec --no-startup-id xautolock -secure -time 5 -locker "$HOME/scripts/lock_screen.sh"
+exec --no-startup-id xautolock -secure -time 5 -locker "$HOME/scripts/lock_screen.sh" -corners +00- -cornerdelay 2
 
 exec_always --no-startup-id feh --bg-max "$HOME/.wallpaper"
 exec_always --no-startup-id compton 
