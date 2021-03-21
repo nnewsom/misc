@@ -105,9 +105,9 @@ set $workspace3 "3"
 set $workspace4 "4"
 set $workspace5 "5"
 set $workspace6 "6"
-set $workspace7 "7: vlc"
-set $workspace8 "8: bn"
-set $workspace9 "9: burp"
+set $workspace7 "7"
+set $workspace8 "8"
+set $workspace9 "9"
 set $workspace10 "10: kpx"
 
 # switch to workspace
@@ -136,9 +136,9 @@ bindsym $mod+Shift+0 move container to workspace $workspace10
 
 # workspace assign
 # [class="Chromium-browser"] $workspace2
-assign [class="vlc"] $workspace7
-assign [class="Binary Ninja"] $workspace8
-assign [class="burp-StartBurp"] $workspace9
+# assign [class="vlc"] $workspace7
+# assign [class="Binary Ninja"] $workspace8
+# assign [class="burp-StartBurp"] $workspace9
 assign [class="Keepassx"] $workspace10
 
 # float
@@ -195,8 +195,8 @@ hide_edge_borders both
 # Start i3bar to display a workspace bar (plus the system information i3status
 # finds out, if available)
 bar {
-#        status_command i3status
-        status_command i3blocks -c "$HOME/.config/i3/i3blocks.conf"
+        status_command i3status
+#        status_command i3blocks -c "$HOME/.config/i3/i3blocks.conf"
         tray_output primary
         colors {
                 background $bg-color
@@ -211,18 +211,17 @@ bar {
 
 # settings/background
 exec --no-startup-id synclient TouchpadOff=1
+exec --no-startup-id nm-applet
 exec --no-startup-id xautolock -secure -time 5 -locker "$HOME/scripts/lock_screen.sh"
-exec --no-startup-id redshift -t 3500:5500 -b 1.0:0.8 -l 37:121
-exec --no-startup-id ssh-add
 
 exec_always --no-startup-id feh --bg-max "$HOME/.wallpaper"
 exec_always --no-startup-id compton 
 
 # shortcuts
 bindsym $mod+Shift+x exec i3lock --color "$bg-color"
-bindsym $mod+u exec --no-startup-id "$HOME/scripts/empty_chrome.sh"
+bindsym $mod+u exec --no-startup-id "$HOME/scripts/empty_firefox.sh"
 bindsym $mod+b exec --no-startup-id "$HOME/scripts/start_burp.sh"
-bindsym $mod+y exec --no-startup-id "$HOME/tools/binaryninja/binaryninja"
+bindsym $mod+o exec --no-startup-id "$HOME/tools/binaryninja/binaryninja"
 
 # Volume controls
 bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume 0 +5%
