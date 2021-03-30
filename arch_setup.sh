@@ -4,7 +4,7 @@ SWAP_SIZE="1G"
 
 INSTALL_PACKAGES="arch-install-scripts"
 PACSTRAP_PACKAGES="base base-devel efibootmgr vim dialog xterm btrfs-progs grub mkinitcpio linux linux-firmware lvm2 pacman-contrib"
-PACKAGES="git wget i3lock i3blocks firefox xautolock wpa_supplicant networkmanager alsa-utils git ttf-dejavu ttf-liberation i3-wm i3lock i3blocks lxappearance thunar network-manager-applet terminator compton dmenu feh xorg-server xorg-xinit arc-gtk-theme arc-icon-theme"
+PACKAGES="git wget i3lock i3blocks firefox xautolock wpa_supplicant networkmanager alsa-utils git ttf-dejavu ttf-liberation i3-wm i3lock i3blocks lxappearance thunar network-manager-applet terminator compton dmenu feh xorg-server xorg-xinit arc-gtk-theme arc-icon-theme i3status man python-pip python-virtualenv strace"
 
 # stage 1
 pacman -Sy
