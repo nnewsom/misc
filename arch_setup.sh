@@ -97,7 +97,12 @@ chown "\$username":"\$username" "\$XINITRC"
 cat << EOF >> "\$BASHRC"
 alias vi='vim'
 alias cat='cat -v'
-alias view='vim -r'
+alias view='vim -R'
+alias mv='mv -i'
+alias rm='rm -i'
+alias cp='cp -i'
+
+PS1='[\e[1;37m\u\e[m@\e[0;35m\h\e[m \w]\$ '
 EOF
 chown "\$username":"\$username" "\$BASHRC"
 
