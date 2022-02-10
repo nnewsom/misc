@@ -102,7 +102,6 @@ alias mv='mv -i'
 alias rm='rm -i'
 alias cp='cp -i'
 
-PS1='[\e[1;37m\u\e[m@\e[0;35m\h\e[m \w]\$ '
 EOF
 chown "\$username":"\$username" "\$BASHRC"
 
@@ -115,6 +114,7 @@ set showmatch
 set hlsearch
 set foldenable
 set foldlevelstart=10
+set rnu
 EOF
 chown "\$username":"\$username" "\$VIMRC"
 
