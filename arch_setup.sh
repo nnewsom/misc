@@ -1,10 +1,15 @@
 #!/bin/bash -x 
+
+# this setup script is specifically for EFI systems
+# could be modified for BIOS but why bother in this day in age
+# to enable EFI on vbox: VM->Settings->System->Motherboard check and enable "Enable EFI (special OSes only)"
+
 ROOT_SIZE="100%FREE"
 SWAP_SIZE="1G"
 
 INSTALL_PACKAGES="arch-install-scripts"
 PACSTRAP_PACKAGES="base base-devel efibootmgr vim dialog xterm btrfs-progs grub mkinitcpio linux linux-firmware lvm2 pacman-contrib"
-PACKAGES="git wget i3lock i3blocks firefox xautolock wpa_supplicant networkmanager alsa-utils git ttf-dejavu ttf-liberation i3-wm i3lock i3blocks lxappearance thunar network-manager-applet terminator compton dmenu feh xorg-server xorg-xinit arc-gtk-theme arc-icon-theme i3status man python-pip python-virtualenv strace"
+PACKAGES="git wget i3lock i3blocks firefox xautolock wpa_supplicant networkmanager alsa-utils git ttf-dejavu ttf-liberation i3-wm i3lock i3blocks lxappearance thunar network-manager-applet terminator compton dmenu feh xorg-server xorg-xinit arc-gtk-theme arc-icon-theme i3status man python-pip python-virtualenv strace polkit keepassxc rustup"
 
 # stage 1
 pacman -Sy
@@ -90,6 +95,9 @@ VIMRC="\$USER_HOMEDIR/.vimrc"
 
 cat << EOF > "\$XINITRC"
 #!/bin/bash
+eval \$(ssh-agent)
+export SSH_AUTH_SOCK
+export SSH_AGENT_PID
 exec i3
 EOF
 chown "\$username":"\$username" "\$XINITRC"
@@ -101,6 +109,8 @@ alias view='vim -R'
 alias mv='mv -i'
 alias rm='rm -i'
 alias cp='cp -i'
+
+PS1='[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\\$ '
 
 EOF
 chown "\$username":"\$username" "\$BASHRC"
@@ -115,6 +125,7 @@ set hlsearch
 set foldenable
 set foldlevelstart=10
 set rnu
+set number
 EOF
 chown "\$username":"\$username" "\$VIMRC"
 
@@ -144,4 +155,6 @@ pacman -S virtualbox-guest-utils --noconfirm
 systemctl enable vboxservice
 END_STAGE2
 chmod +x /mnt/stage2.sh
+echo "build env complete. dropping into build root chroot. exec stage2.sh to continue"
 arch-chroot /mnt /bin/bash
+echo "build complete"
