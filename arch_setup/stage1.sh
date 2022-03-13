@@ -16,7 +16,6 @@ if [ -z "$DEVICE" ]
         echo "need path of disk to install. ie. /dev/sda, /dev/nvme0n1";
         exit 1;
 fi
-echo "Installing on device $DEVICE"
 
 if [[ "$DEVICE" =~ ^/dev/nvme0.* ]]
     then
@@ -57,8 +56,18 @@ EOF
 modprobe dm-crypt
 modprobe dm-mod
 
-cryptsetup luksFormat -v -s 512 -h sha512 "$PART_LVM"
-cryptsetup open "$PART_LVM" luks_lvm
+until cryptsetup luksFormat -v -s 512 -h sha512 "$PART_LVM"
+do
+    echo "failed to luks format. please try again"
+    sleep 2
+done
+
+until cryptsetup open "$PART_LVM" luks_lvm
+do
+    echo "failed to open luks. please try again"
+    sleep 2
+done
+
 pvcreate /dev/mapper/luks_lvm
 vgcreate arch /dev/mapper/luks_lvm
 lvcreate -n root -l "$ROOT_SIZE" arch

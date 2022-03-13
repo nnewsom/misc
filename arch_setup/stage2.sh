@@ -58,18 +58,37 @@ read -p "hostname: " hostname
 hostnamectl set-hostname "$hostname"
 # root password
 echo "setup root password"
-passwd root
+until passwd root
+do
+    echo "failed to set root password. please try again"
+    sleep 2
+done
+
 # limited user
-echo "setup user"
+echo "setup limited user"
 read -p "username: " username
+while [[ -z "$username" ]]
+do
+    echo "incorrect username. please try again."
+    read -p "username: " username
+done
 useradd -G wheel,storage,power,network,audio -m "$username"
-passwd "$username"
+
+until passwd "$username"
+do
+    echo "failed to set password. please try agian"
+    sleep 2
+done
 
 # set up local .rc files
 USER_HOMEDIR="/home/$username"
 XINITRC="$USER_HOMEDIR/.xinitrc"
 BASHRC="$USER_HOMEDIR/.bashrc"
 VIMRC="$USER_HOMEDIR/.vimrc"
+
+# the export SSH_* is for universal ssh-agent across all terminals
+# in i3 session. tldr: unlock ssh key once and use across all 
+# terminals 
 
 cat << EOF > "$XINITRC"
 #!/bin/bash
@@ -91,7 +110,7 @@ alias cp='cp -i'
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
 
-PS1='[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\\$ '
+PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\\$ '
 
 EOF
 chown "$username":"$username" "$BASHRC"
@@ -118,8 +137,13 @@ timedatectl set-timezone America/Los_Angeles
 
 # pick fatest local US mirrors
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
-wget 'https://archlinux.org/mirrorlist/?country=US&protocol=https&ip_version=4' -O /etc/pacman.d/mirrorlist.new
-cat -v /etc/pacman.d/mirrorlist.new | egrep "(.edu|rackspace.com|kernel.org)/" | tr -d '#' > /etc/pacman.d/mirrorlist.new.2
+wget 'https://archlinux.org/mirrorlist/?country=US&protocol=https&ip_version=4' \
+-O /etc/pacman.d/mirrorlist.new
+
+cat -v /etc/pacman.d/mirrorlist.new | \
+egrep "(.edu|rackspace.com|kernel.org)/" | \
+tr -d '#' > /etc/pacman.d/mirrorlist.new.2
+
 rankmirrors -n 6 /etc/pacman.d/mirrorlist.new.2 > /etc/pacman.d/mirrorlist
 pacman -Sy
 
@@ -135,18 +159,34 @@ sed -i 's/umask 022/umask 027/g' /etc/profile
 systemctl enable NetworkManager
 
 # Setups up configuration and common scripts from misc repo
-read -p "set up configurations and copy scripts for misc? (Y/n): " confirm && [[ $confirm != [nN] ]] || exit 1
-cd /tmp
-git clone --depth 1 https://github.com/nnewsom/misc.git
-mkdir -p "$USER_HOMEDIR/.config"
-cp -r misc/i3 "$USER_HOMEDIR/.config/"
-cp -r misc/terminator "$USER_HOMEDIR/.config/"
-cp -r misc/scripts "$USER_HOMEDIR/"
-chown -R "$username":"$username" "$USER_HOMEDIR"
+read -p "set up configurations and copy scripts for misc? (Y/n): " confirm
+if [[ $confirm == [yY] ]]
+    then
+        cd /tmp
+        git clone --depth 1 https://github.com/nnewsom/misc.git
+        mkdir -p "$USER_HOMEDIR/.config"
+        cp -r misc/i3 "$USER_HOMEDIR/.config/"
+        cp -r misc/terminator "$USER_HOMEDIR/.config/"
+        cp -r misc/scripts "$USER_HOMEDIR/"
+        chown -R "$username":"$username" "$USER_HOMEDIR"
+fi
 
 # set up virtualbox guest and enable core service
 # this doesn't enable clipboard, drag drop etc
 # those will need to be enabled manually with `VBoxClient --clipboard`
-read -p "virtualbox vm? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
-pacman -S virtualbox-guest-utils --noconfirm
-systemctl enable vboxservice
+
+read -p "virtualbox vm? (y/N): " confirm
+if [[ $confirm == [yY] ]]
+    then
+        pacman -S virtualbox-guest-utils --noconfirm
+        systemctl enable vboxservice
+        echo 'add `VBoxClient` commands to rc file to enable services on by default'
+
+fi
+
+read -p "add xfce? (y/N): " confirm
+if [[ $confirm == [yY] ]]
+    then
+        pacman -S xfce4 xfce4-goodies --noconfirm
+        echo "Don't forget to change xinit if you want this as default"
+fi
