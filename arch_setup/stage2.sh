@@ -17,11 +17,11 @@
 # * install virtualbox guest if in vm (optional)
 
 PACKAGES=\
-"git wget i3lock i3blocks firefox xautolock "\
+"git wget i3lock firefox xautolock "\
 "wpa_supplicant networkmanager alsa-utils "\
 "ttf-dejavu ttf-liberation i3-wm i3lock "\
 "lxappearance thunar network-manager-applet "\
-"terminator dmenu feh xorg-server "\
+"terminator dmenu feh xorg-server xorg-xrandr "\
 "xorg-xinit arc-gtk-theme arc-icon-theme "\
 "i3status man python-pip python-virtualenv "\
 "strace polkit keepassxc rustup"
@@ -37,20 +37,47 @@ read -p "modification correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exi
 mkinitcpio -v -p linux
 
 # install bootloader
-pacman -S grub efibootmgr intel-ucode --noconfirm
-grub-install --target=x86_64-efi --efi-directory=/boot/ --bootloader-id=GRUB
-cp /etc/default/grub /etc/default/grub.bak
-echo "adding cryptdevice to grub cmdline"
-egrep ^GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub
+read -p "install grub? note: if no grub, will install systemd-boot (Y/n): " confirm
+if [[ $confirm != [nN] ]]
+    then
+        # install grub
+        pacman -S grub efibootmgr intel-ucode --noconfirm
+        grub-install --target=x86_64-efi --efi-directory=/boot/ --bootloader-id=GRUB
+        cp /etc/default/grub /etc/default/grub.bak
+        echo "adding cryptdevice to grub cmdline"
+        egrep ^GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub
 
-# the `REPLACEMEBOOT` tag will be replaced by stage1 to target the UUID of the crypt device
-sed -i \
-    's,GRUB_CMDLINE_LINUX_DEFAULT=",GRUB_CMDLINE_LINUX_DEFAULT="REPLACEMEBOOT_OPTIONSREPLACEME ,g' \
-    /etc/default/grub
+        # the `REPLACEMEBOOT` tag will be replaced by stage1 to target the UUID of the crypt device
+        sed -i \
+            's,GRUB_CMDLINE_LINUX_DEFAULT=",GRUB_CMDLINE_LINUX_DEFAULT="REPLACEMEBOOT_OPTIONSREPLACEME ,g' \
+            /etc/default/grub
 
-egrep ^GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub
-read -p "modification correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
-grub-mkconfig -o /boot/grub/grub.cfg
+        egrep ^GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub
+        read -p "boot config correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
+        grub-mkconfig -o /boot/grub/grub.cfg
+    else
+        # install systemdboot
+        LOADER_FILE="/boot/loader/loader.conf"
+        BOOTCONF_FILE="/boot/loader/entries/arch.conf"
+        pacman -S efibootmgr intel-ucode 
+        bootctl install
+        cat << EOF >> "$LOADER_FILE"
+default arch.conf
+timeout 0
+console-mode max
+editor no
+EOF
+        cat << EOF >> "$BOOTCONF_FILE"
+title arch linux
+linux /vmlinuz-linux
+initrd /intel-ucode.img
+initrd /initramfs-linux.img
+options REPLACEMEBOOT_OPTIONSREPLACEME rw
+EOF
+        cat "$BOOTCONF_FILE"
+        read -p "boot config correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
+
+fi
 
 # set sytsem information
 # hostname
@@ -115,7 +142,7 @@ PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\\$ '
 EOF
 chown "$username":"$username" "$BASHRC"
 
-cat << EOF >> "\$VIMRC"
+cat << EOF >> "$VIMRC"
 syntax on
 set tabstop=4
 set expandtab
