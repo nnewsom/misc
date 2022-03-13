@@ -67,6 +67,7 @@ timeout 0
 console-mode max
 editor no
 EOF
+        # the `REPLACEMEBOOT` tag will be replaced by stage1 to target the UUID of the crypt device
         cat << EOF >> "$BOOTCONF_FILE"
 title arch linux
 linux /vmlinuz-linux
