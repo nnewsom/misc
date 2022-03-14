@@ -60,7 +60,7 @@ if [[ $confirm != [nN] ]]
         # install systemdboot
         LOADER_FILE="/boot/loader/loader.conf"
         BOOTCONF_FILE="/boot/loader/entries/arch.conf"
-        pacman -S efibootmgr intel-ucode 
+        pacman -S efibootmgr intel-ucode --noconfirm
         bootctl install
         cat << EOF >> "$LOADER_FILE"
 default arch.conf
@@ -76,7 +76,9 @@ initrd /intel-ucode.img
 initrd /initramfs-linux.img
 options REPLACEMEBOOT_OPTIONSREPLACEME rw
 EOF
+        echo "$BOOTCONF_FILE"
         cat "$BOOTCONF_FILE"
+        echo ""
         read -p "boot config correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
 
 fi
