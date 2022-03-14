@@ -108,7 +108,7 @@ set $workspace6 "6"
 set $workspace7 "7"
 set $workspace8 "8"
 set $workspace9 "9"
-set $workspace10 "10: kpx"
+set $workspace10 "10"
 
 # switch to workspace
 bindsym $mod+1 workspace $workspace1
@@ -134,15 +134,15 @@ bindsym $mod+Shift+8 move container to workspace $workspace8
 bindsym $mod+Shift+9 move container to workspace $workspace9
 bindsym $mod+Shift+0 move container to workspace $workspace10
 
-# workspace assign
+# workspace assign examples
 # [class="Chromium-browser"] $workspace2
 # assign [class="vlc"] $workspace7
 # assign [class="Binary Ninja"] $workspace8
 # assign [class="burp-StartBurp"] $workspace9
-assign [class="Keepassx"] $workspace10
+# assign [class="Keepassxc"] $workspace10
 
-# float
-for_window [class="*Burp*"] floating enable
+# float example
+# for_window [class="*Burp*"] floating enable
 
 # reload the configuration file
 bindsym $mod+Shift+c reload
@@ -192,11 +192,10 @@ client.urgent           $urgent-bg-color   $urgent-bg-color   $text-color       
 
 hide_edge_borders both
 
-# Start i3bar to display a workspace bar (plus the system information i3status
+# Start i3status to display a workspace bar (plus the system information i3status
 # finds out, if available)
 bar {
         status_command i3status
-#        status_command i3blocks -c "$HOME/.config/i3/i3blocks.conf"
         tray_output primary
         colors {
                 background $bg-color
@@ -210,20 +209,26 @@ bar {
 }
 
 # settings/background
+## disable's touchpad since I use tracpoint
 exec --no-startup-id synclient TouchpadOff=1
+# exec --no-startup-id xrandr --output HDMI-0 --primary
+# exec --no-startup-id pulseaudio --start
+
 exec --no-startup-id nm-applet
+# exec --no-startup-id pasystray
+
+# bottom right corner for non lock mode
 exec --no-startup-id xautolock -secure -time 5 -locker "$HOME/scripts/lock_screen.sh" -corners +00- -cornerdelay 2
 
 exec_always --no-startup-id feh --bg-max "$HOME/.wallpaper"
-exec_always --no-startup-id compton 
 
 # shortcuts
 bindsym $mod+Shift+x exec i3lock --color "$bg-color"
-bindsym $mod+u exec --no-startup-id "$HOME/scripts/empty_firefox.sh"
-bindsym $mod+b exec --no-startup-id "$HOME/scripts/start_burp.sh"
-bindsym $mod+o exec --no-startup-id "$HOME/tools/binaryninja/binaryninja"
+# bindsym $mod+u exec --no-startup-id "$HOME/scripts/empty_firefox.sh"
+# bindsym $mod+b exec --no-startup-id "$HOME/scripts/start_burp.sh"
+# bindsym $mod+o exec --no-startup-id "$HOME/tools/binaryninja/binaryninja"
 
-# Volume controls
-bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume 0 +5%
-bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume 0 -5%
-bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute alsa_output.pci-0000_00_1f.3.analog-stereo toggle
+### Volume controls
+# bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume 0 +5%
+# bindsym XF86AudioLowerVolume exec --no-startup-id pactl set-sink-volume 0 -5%
+# bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute alsa_output.pci-0000_00_1f.3.analog-stereo toggle

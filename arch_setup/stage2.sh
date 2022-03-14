@@ -24,7 +24,8 @@ PACKAGES=\
 "terminator dmenu feh xorg-server xorg-xrandr "\
 "xorg-xinit arc-gtk-theme arc-icon-theme "\
 "i3status man python-pip python-virtualenv "\
-"strace polkit keepassxc rustup"
+"strace polkit keepassxc rustup pulseaudio "\
+"pasystray"
 
 # set up initram fs
 cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.bak
