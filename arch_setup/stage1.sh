@@ -91,6 +91,6 @@ PART_LVM_UUID=`blkid -s UUID -o value $PART_LVM`
 BOOT_OPTIONS="cryptdevice=UUID=""$PART_LVM_UUID"":crypt_lvm root=/dev/mapper/arch-root rw"
 sed -i "s,REPLACEMEBOOT_OPTIONSREPLACEME,$BOOT_OPTIONS,g" /mnt/stage2.sh
 
-echo "stage1 complete. dropping into build root chroot. exec stage2.sh to continue"
+echo "stage1 complete. dropping into build root chroot. exec or modify stage2.sh to continue"
 arch-chroot /mnt /bin/bash
 echo "build complete"
