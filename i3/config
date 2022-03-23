@@ -110,6 +110,27 @@ set $workspace8 "8"
 set $workspace9 "9"
 set $workspace10 "10"
 
+## multi monitor examples
+# set $primary_screen "HDMI-0"
+# set $secondary_screen "DP-0"
+# 
+# workspace 1  output $primary_screen
+# workspace 2  output $primary_screen
+# workspace 3  output $primary_screen
+# workspace 4  output $primary_screen
+# workspace 5  output $primary_screen
+# workspace 6  output $primary_screen
+# workspace 7  output $primary_screen
+# workspace 8  output $primary_screen
+# workspace 9  output $secondary_screen
+# workspace 10 output $secondary_screen
+
+# exec_always --no-startup-id xrandr --output HDMI-0 --primary
+# 
+# # vertical monitor
+# exec_always --no-startup-id xrandr --output DP-0 --rotate left
+
+
 # switch to workspace
 bindsym $mod+1 workspace $workspace1
 bindsym $mod+2 workspace $workspace2

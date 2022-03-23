@@ -25,7 +25,7 @@ PACKAGES=\
 "xorg-xinit arc-gtk-theme arc-icon-theme "\
 "i3status man python-pip python-virtualenv "\
 "strace polkit keepassxc rustup pulseaudio "\
-"pasystray"
+"pasystray openbsd-netcat socat"
 
 # set up initram fs
 cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.bak
@@ -140,6 +140,8 @@ alias rm='rm -i'
 alias cp='cp -i'
 alias ls='ls --color=auto'
 alias grep='grep --color=auto'
+alias objdump='objdump -M intel'
+alias gdb='gdb -q'
 
 PS1='\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\\$ '
 
@@ -150,13 +152,14 @@ cat << EOF >> "$VIMRC"
 syntax on
 set tabstop=4
 set expandtab
+set shiftwidth=4
 set softtabstop=4
-set showmatch
 set hlsearch
 set foldenable
 set foldlevelstart=10
 set rnu
 set number
+set mouse=a
 EOF
 chown "$username":"$username" "$VIMRC"
 
