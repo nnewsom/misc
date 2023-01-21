@@ -21,7 +21,7 @@ PACKAGES=\
 "wpa_supplicant networkmanager alsa-utils "\
 "ttf-dejavu ttf-liberation i3-wm i3lock "\
 "lxappearance thunar network-manager-applet "\
-"terminator dmenu feh xorg-server xorg-xrandr "\
+"dmenu feh xorg-server xorg-xrandr "\
 "xorg-xinit arc-gtk-theme arc-icon-theme "\
 "i3status man python-pip python-virtualenv "\
 "strace polkit keepassxc rustup pulseaudio "\
@@ -200,7 +200,7 @@ if [[ $confirm == [yY] ]]
         git clone --depth 1 https://github.com/nnewsom/misc.git
         mkdir -p "$USER_HOMEDIR/.config"
         cp -r misc/i3 "$USER_HOMEDIR/.config/"
-        cp -r misc/terminator "$USER_HOMEDIR/.config/"
+        cp -r misc/x11/Xresources "$USER_HOMEDIR/.Xresources"
         cp -r misc/scripts "$USER_HOMEDIR/"
         chown -R "$username":"$username" "$USER_HOMEDIR"
 fi

@@ -33,10 +33,9 @@ font pango:monospace 9
 floating_modifier $mod
 
 # start a terminal
-#bindsym $mod+Shift+Return exec i3-sensible-terminal
-# bindsym $mod+Shift+Return exec urxvt
 bindsym $mod+Shift+Return exec xfce4-terminal
-bindsym $mod+Return exec terminator -u
+bindsym $mod+Return exec xterm
+#bindsym $mod+Return exec terminator -u
 #bindsym $mod+Return exec urxvt
 
 # kill focused window
