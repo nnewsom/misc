@@ -1,0 +1,63 @@
+# Last Modified: Sun Jan 29 16:29:34 2023
+include <tunables/global>
+
+# vim:syntax=apparmor
+# AppArmor policy for obsidian
+# ###AUTHOR###
+# ###COPYRIGHT###
+# ###COMMENT###
+# it needs sys_admin capability for clone flags to chrome sandbox
+# No template variables specified
+
+
+/opt/tools/obsidian/obsidian {
+  include <abstractions/base>
+  include <abstractions/bash>
+  include <abstractions/gnome>
+  include <abstractions/nvidia>
+  include <abstractions/postfix-common>
+  include <abstractions/ubuntu-konsole>
+
+  capability sys_admin,
+
+  deny /etc/resolv.conf r,
+  deny /usr/bin/xdg-open x,
+  deny @{HOME}/.bash_profile rw,
+  deny @{HOME}/.bashrc rw,
+  deny @{HOME}/.ssh/ rw,
+  deny @{HOME}/archive/ rw,
+  deny @{HOME}/kdb/ rw,
+  deny @{HOME}/notes/ rw,
+
+  /etc/gai.conf r,
+  /etc/host.conf r,
+  /etc/hosts r,
+  /etc/libva.conf r,
+  /etc/nsswitch.conf r,
+  /opt/tools/obsidian/obsidian mrix,
+  /proc/ r,
+  /proc/** r,
+  /sys/** r,
+  /usr/bin/basename mrix,
+  /usr/bin/dbus-send mrix,
+  /usr/bin/grep mrix,
+  /usr/bin/nvidia-modprobe mrix,
+  /usr/bin/uname mrix,
+  /usr/bin/xdg-settings mrix,
+  /usr/bin/xprop mrix,
+  /usr/share/icons/** r,
+  owner /dev/shm/.org.chromium.Chromium.* rw,
+  owner /dev/tty1 rw,
+  owner /home/*/.config/** k,
+  owner /home/*/.config/** r,
+  owner /home/*/.config/obsidian/ r,
+  owner /home/*/.config/obsidian/** rw,
+  owner /home/*/.icons/default/index.theme r,
+  owner /opt/tools/obsidian/** m,
+  owner /opt/tools/obsidian/** r,
+  owner /opt/tools/obsidian/libffmpeg.so mr,
+  owner /home/*/vaults/** rw,
+  owner /proc/** r,
+  owner /proc/** w,
+
+}

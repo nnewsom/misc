@@ -25,6 +25,7 @@ PACKAGES=\
 "xorg-xinit arc-gtk-theme arc-icon-theme "\
 "i3status man python-pip python-virtualenv "\
 "strace polkit keepassxc rustup pulseaudio "\
+"python-notify2 python-psutil syslog-ng dunst"\
 "pasystray openbsd-netcat socat"
 
 # set up initram fs
@@ -69,12 +70,13 @@ console-mode max
 editor no
 EOF
         # the `REPLACEMEBOOT` tag will be replaced by stage1 to target the UUID of the crypt device
+        # enable boot with apparmor on by default, enable all kernel procs to be auditable
         cat << EOF >> "$BOOTCONF_FILE"
 title arch linux
 linux /vmlinuz-linux
 initrd /intel-ucode.img
 initrd /initramfs-linux.img
-options REPLACEMEBOOT_OPTIONSREPLACEME rw
+options REPLACEMEBOOT_OPTIONSREPLACEME lsm=landlock,lockdown,yama,integrity,apparmor,bpf audit=1 rw
 EOF
         echo "$BOOTCONF_FILE"
         cat "$BOOTCONF_FILE"
@@ -126,6 +128,7 @@ cat << EOF > "$XINITRC"
 eval \$(ssh-agent)
 export SSH_AUTH_SOCK
 export SSH_AGENT_PID
+cat /dev/null $HOME/.Xresources | xrdb -merge -
 exec i3
 EOF
 chown "$username":"$username" "$XINITRC"
@@ -166,6 +169,15 @@ chown "$username":"$username" "$VIMRC"
 # install desired base packages
 pacman -S $PACKAGES --noconfirm
 
+# add the user to syslog group to read logs for notify
+gpasswd -a "$username" log
+
+# add new daemon group for auditd to use and add user to group
+# change the group in /etc/audit/auditd.conf if needed. this just sets ground work
+# to prevent a "oh i need to be in the group and need to log out" momments
+groupadd -r audit
+gpasswd -a "$username" audit
+
 # set up timezone
 timedatectl set-timezone America/Los_Angeles
 
@@ -175,7 +187,7 @@ wget 'https://archlinux.org/mirrorlist/?country=US&protocol=https&ip_version=4' 
 -O /etc/pacman.d/mirrorlist.new
 
 cat -v /etc/pacman.d/mirrorlist.new | \
-egrep "(.edu|rackspace.com|kernel.org)/" | \
+egrep "(rackspace.com|kernel.org)/" | \
 tr -d '#' > /etc/pacman.d/mirrorlist.new.2
 
 rankmirrors -n 6 /etc/pacman.d/mirrorlist.new.2 > /etc/pacman.d/mirrorlist

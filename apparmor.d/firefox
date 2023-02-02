@@ -1,0 +1,106 @@
+# Last Modified: Sun Jan 29 16:41:58 2023
+include <tunables/global>
+
+# vim:syntax=apparmor
+# AppArmor policy for firefox
+# ###AUTHOR###
+# ###COPYRIGHT###
+# ###COMMENT###
+# No template variables specified
+
+
+/usr/bin/firefox {
+  include <abstractions/base>
+  include <abstractions/bash>
+  include <abstractions/consoles>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/postfix-common>
+  include <abstractions/user-tmp>
+
+  capability sys_admin,
+  capability sys_ptrace,
+
+  deny owner /home/*/.bash_logout r,
+  deny owner /home/*/.gdb_history r,
+  deny owner /home/*/.gdbinit r,
+  deny owner /home/*/.gdbinit_script r,
+  deny owner /home/*/.gitconfig r,
+  deny owner /home/*/.gtkrc-2.0 r,
+  deny owner /home/*/.lesshst r,
+  deny owner /home/*/.nvidia-settings-rc r,
+  deny owner /home/*/.picocom_history r,
+  deny owner /home/*/.python_history r,
+  deny owner /home/*/.sqlite_history r,
+  deny owner /home/*/.steam/steam.pid r,
+  deny owner /home/*/.viminfo r,
+  deny owner /home/*/.vimrc r,
+  deny owner /home/*/.wget-hsts r,
+  deny owner /home/*/.xinitrc r,
+
+  /dev/ r,
+  /dev/dri/ r,
+  /dev/dri/* rw,
+  /dev/nvidia-modeset rw,
+  /dev/nvidia0 rw,
+  /dev/nvidiactl rw,
+  /dev/shm/ r,
+  /etc/ r,
+  /etc/arch-release r,
+  /etc/ca-certificates/** r,
+  /etc/ca-certificates/**/ r,
+  /etc/fonts/** r,
+  /etc/gai.conf r,
+  /etc/host.conf r,
+  /etc/hosts r,
+  /etc/libva.conf r,
+  /etc/lsb-release r,
+  /etc/mailcap r,
+  /etc/mime.types r,
+  /etc/nsswitch.conf r,
+  /etc/passwd r,
+  /etc/pulse/client.conf r,
+  /etc/resolv.conf r,
+  /proc/** r,
+  /sys/bus/pci/devices/ r,
+  /sys/devices/** r,
+  /usr/bin/bash ix,
+  /usr/bin/find mrix,
+  /usr/bin/firefox r,
+  /usr/bin/getopt mrix,
+  /usr/bin/head mrix,
+  /usr/bin/lsb_release mrix,
+  /usr/bin/sed mrix,
+  /usr/bin/tr mrix,
+  /usr/lib/firefox/firefox mrix,
+  /usr/share/** r,
+  /var/cache/fontconfig/* r,
+  owner /home/*/ r,
+  owner /home/*/.Xauthority r,
+  owner /home/*/.Xresources r,
+  owner /home/*/.cache/* rwk,
+  owner /home/*/.cache/mozilla/** rw,
+  owner /home/*/.cache/nvidia/GLCache/ r,
+  owner /home/*/.cache/nvidia/GLCache/** rwk,
+  owner /home/*/.config/dconf/user r,
+  owner /home/*/.config/gtk-3.0/settings.ini r,
+  owner /home/*/.config/pulse/cookie rk,
+  owner /home/*/.icons/ r,
+  owner /home/*/.local/share/ r,
+  owner /home/*/.local/share/* rw,
+  owner /home/*/.local/share/applications/ r,
+  owner /home/*/.local/share/icons/ r,
+  owner /home/*/.local/share/icons/hicolor/**/ r,
+  owner /home/*/.local/share/icons/hicolor/16x16/apps/ r,
+  owner /home/*/.mozilla/** r,
+  owner /home/*/.mozilla/** wk,
+  owner /home/*/Downloads/ r,
+  owner /home/*/Downloads/* w,
+  owner /home/*/.cache/fontconfig/* r,
+  owner /proc/** w,
+  owner /run/user/1000/dconf/user rw,
+  owner /run/user/1000/pulse/ r,
+  owner /tmp/*/ w,
+  owner /tmp/firefox/* wk,
+  owner /home/*/.pulse-cookie r,
+
+}

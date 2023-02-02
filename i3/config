@@ -234,8 +234,17 @@ exec --no-startup-id synclient TouchpadOff=1
 # exec --no-startup-id xrandr --output HDMI-0 --primary
 # exec --no-startup-id pulseaudio --start
 
+# notifications daemon
+exec --no-startup-id /usr/bin/dunst
+
+# apparmor denial notifications
+exec --no-startup-id /usr/bin/aa-notify -p -s -1 -w 1 -f /var/log/messages.log
+
+# systray network manager controls
 exec --no-startup-id nm-applet
-# exec --no-startup-id pasystray
+
+# systray pulseaudio controls
+exec --no-startup-id pasystray
 
 # bottom right corner for non lock mode
 exec --no-startup-id xautolock -secure -time 5 -locker "$HOME/scripts/lock_screen.sh" -corners +00- -cornerdelay 2
@@ -244,9 +253,11 @@ exec_always --no-startup-id feh --bg-max "$HOME/.wallpaper"
 
 # shortcuts
 bindsym $mod+Shift+x exec i3lock --color "$bg-color"
+
+# bindsym $mod+n exec --no-startup-id "$HOME/scripts/no_network_wrapper.sh /opt/tools/obsidian/obsidian"
 # bindsym $mod+u exec --no-startup-id "$HOME/scripts/empty_firefox.sh"
 # bindsym $mod+b exec --no-startup-id "$HOME/scripts/start_burp.sh"
-# bindsym $mod+o exec --no-startup-id "$HOME/tools/binaryninja/binaryninja"
+# bindsym $mod+o exec --no-startup-id "/opt/tools/binaryninja/binaryninja"
 
 ### Volume controls
 # bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume 0 +5%

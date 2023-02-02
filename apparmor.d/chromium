@@ -1,0 +1,76 @@
+# Last Modified: Mon Jan 30 09:23:16 2023
+include <tunables/global>
+
+# vim:syntax=apparmor
+# AppArmor policy for chromium
+# ###AUTHOR###
+# ###COPYRIGHT###
+# ###COMMENT###
+# No template variables specified
+
+
+/usr/bin/chromium {
+  include <abstractions/audio>
+  include <abstractions/base>
+  include <abstractions/bash>
+  include <abstractions/consoles>
+  include <abstractions/dbus-session-strict>
+  include <abstractions/dri-common>
+  include <abstractions/nvidia>
+  include <abstractions/postfix-common>
+
+  capability sys_admin,
+  capability sys_ptrace,
+
+  /dev/ r,
+  /dev/dri/ r,
+  /etc/fonts/** r,
+  /etc/gai.conf r,
+  /etc/host.conf r,
+  /etc/hosts r,
+  /etc/libva.conf r,
+  /etc/nsswitch.conf r,
+  /etc/resolv.conf r,
+  /proc/ r,
+  /proc/** r,
+  /sys/bus/ r,
+  /sys/bus/** r,
+  /sys/class/ r,
+  /sys/class/*/ r,
+  /sys/devices/** r,
+  /usr/bin/bash ix,
+  /usr/bin/dbus-send mrix,
+  /usr/bin/grep mrix,
+  /usr/bin/sed mrix,
+  /usr/bin/uname mrix,
+  /usr/bin/xdg-mime mrix,
+  /usr/bin/xdg-settings mrix,
+  /usr/bin/xprop mrix,
+  /usr/lib/chromium/chrome_crashpad_handler mrix,
+  /usr/lib/chromium/chromium mrix,
+  /usr/share/** r,
+  /usr/share/fontconfig/** r,
+  /usr/share/fonts/** r,
+  /usr/share/icons/** r,
+  /usr/share/themes/** r,
+  /var/cache/fontconfig/* r,
+  owner /dev/shm/.org.chromium.Chromium.* rw,
+  owner /home/*/.Xauthority r,
+  owner /home/*/.cache/chromium/** rw,
+  owner /home/*/.cache/fontconfig/* r,
+  owner /home/*/.config/chromium/ rw,
+  owner /home/*/.config/chromium/** k,
+  owner /home/*/.config/chromium/** m,
+  owner /home/*/.config/chromium/** rw,
+  owner /home/*/.config/pulse/cookie r,
+  owner /home/*/.icons/ r,
+  owner /home/*/.icons/default/index.theme r,
+  owner /home/*/.local/share/**/ r,
+  owner /home/*/.config/ r,
+  owner /home/*/.config/gtk-3.0/settings.ini r,
+  owner /proc/** rw,
+  owner /run/user/*/pulse/ r,
+  owner /tmp/** rw,
+  owner /usr/lib/chromium/extensions/ rw,
+
+}
