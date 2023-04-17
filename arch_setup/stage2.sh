@@ -128,7 +128,7 @@ cat << EOF > "$XINITRC"
 eval \$(ssh-agent)
 export SSH_AUTH_SOCK
 export SSH_AGENT_PID
-cat /dev/null $HOME/.Xresources | xrdb -merge -
+cat /dev/null \$HOME/.Xresources | xrdb -merge -
 exec i3
 EOF
 chown "$username":"$username" "$XINITRC"
