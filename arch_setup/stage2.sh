@@ -25,7 +25,7 @@ PACKAGES=\
 "xorg-xinit arc-gtk-theme arc-icon-theme "\
 "i3status man python-pip python-virtualenv "\
 "strace polkit keepassxc rustup pulseaudio "\
-"python-notify2 python-psutil syslog-ng dunst"\
+"python-notify2 python-psutil syslog-ng dunst "\
 "pasystray openbsd-netcat socat"
 
 # set up initram fs
