@@ -1,0 +1,80 @@
+# Last Modified: Tue May  2 12:24:06 2023
+abi <abi/3.0>,
+
+include <tunables/global>
+
+/usr/bin/VBox {
+  include <abstractions/base>
+  include <abstractions/bash>
+  include <abstractions/consoles>
+  include <abstractions/gnome>
+  include <abstractions/kde-open5>
+
+  capability net_admin,
+  capability net_raw,
+  capability setgid,
+  capability setuid,
+  capability sys_admin,
+  capability sys_nice,
+
+  network inet raw,
+
+  ptrace read peer=/usr/lib/virtualbox/VirtualBoxVM,
+  ptrace read peer=unconfined,
+
+  /dev/vboxdrvu rw,
+  /etc/nsswitch.conf r,
+  /etc/passwd r,
+  /proc/ r,
+  /proc/*/cmdline r,
+  /proc/*/net/* r,
+  /proc/*/net/dev r,
+  /proc/*/stat r,
+  /proc/cmdline r,
+  /proc/modules r,
+  /proc/sys/kernel/* r,
+  /proc/sys/vm/* r,
+  /proc/tty/drivers r,
+  /proc/uptime r,
+  /sys/block/ r,
+  /sys/class/power_supply/ r,
+  /sys/devices/** r,
+  /sys/firmware/** r,
+  /sys/module/** r,
+  /sys/module/**/ r,
+  /sys/module/*/ r,
+  /usr/bin/VBox r,
+  /usr/bin/basename mrix,
+  /usr/bin/bash ix,
+  /usr/bin/cat mrix,
+  /usr/bin/gawk mrix,
+  /usr/bin/grep mrix,
+  /usr/bin/ip mrix,
+  /usr/bin/kmod mrix,
+  /usr/bin/ps mrix,
+  /usr/bin/readlink mrix,
+  /usr/bin/rm mrix,
+  /usr/bin/uname mrix,
+  /usr/bin/whoami mrix,
+  /usr/lib/virtualbox/VBoxNetAdpCtl mrix,
+  /usr/lib/virtualbox/VBoxNetDHCP mrix,
+  /usr/lib/virtualbox/VBoxSVC mrix,
+  /usr/lib/virtualbox/VBoxXPCOMIPCD mrix,
+  /usr/lib/virtualbox/VirtualBox mrix,
+  /usr/lib/virtualbox/VirtualBoxVM mrix,
+  /usr/share/icons/** r,
+  /usr/share/virtualbox/*/ r,
+  /usr/share/virtualbox/nls/VirtualBox_en.qm r,
+  owner /dev/vboxdrv rw,
+  owner /dev/vboxnetctl rw,
+  owner /etc/iproute2/group r,
+  owner /home/*/.Xauthority r,
+  owner /home/*/.cache/mesa_shader_cache/index rw,
+  owner /home/*/.config/VirtualBox/ r,
+  owner /home/*/.config/VirtualBox/* rw,
+  owner /home/*/iso/* r,
+  owner /home/*/vms/** rw,
+  owner /home/*/vmshared/ r,
+  owner /home/*/vmshared/** rw,
+
+}
