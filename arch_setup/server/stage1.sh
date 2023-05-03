@@ -31,7 +31,7 @@ read -p "look correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
 INSTALL_PACKAGES="arch-install-scripts"
 PACSTRAP_PACKAGES=\
 "base base-devel efibootmgr vim dialog xterm btrfs-progs "\
-"grub mkinitcpio linux linux-firmware lvm2 pacman-contrib intel-ucode"
+"grub mkinitcpio linux linux-firmware pacman-contrib intel-ucode"
 
 pacman -Sy
 pacman -S $INSTALL_PACKAGES --noconfirm
@@ -60,16 +60,12 @@ mkdir -p /mnt/boot
 mount "$PART_EFI" /mnt/boot
 
 lsblk -f
-read -p "lv groups correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
+read -p "partiions correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
 pacstrap /mnt $PACSTRAP_PACKAGES --noconfirm
 genfstab -U -p /mnt > /mnt/etc/fstab
 
 cp ./stage2.sh /mnt/stage2.sh
 chmod +x /mnt/stage2.sh
-
-PART_ROOT_UUID=`blkid -s UUID -o value $PART_ROOT`
-BOOT_OPTIONS="root=PARTUUID=""$PART_ROOT_UUID"" rw"
-sed -i "s,REPLACEMEBOOT_OPTIONSREPLACEME,$BOOT_OPTIONS,g" /mnt/stage2.sh
 
 echo "stage1 complete. dropping into build root chroot. exec or modify stage2.sh to continue"
 arch-chroot /mnt /bin/bash
