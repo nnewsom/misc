@@ -27,7 +27,7 @@ if [[ "$DEVICE" =~ ^/dev/nvme0.* ]]
 fi
 
 echo -e "target: $DEVICE\nEFI: $PART_EFI\nLVM: $PART_LVM"
-read -p "look correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
+# read -p "look correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
 
 INSTALL_PACKAGES="arch-install-scripts"
 PACSTRAP_PACKAGES=\
@@ -79,7 +79,7 @@ mount /dev/mapper/arch-root /mnt
 mkdir -p /mnt/boot
 mount "$PART_EFI" /mnt/boot
 
-lsblk -f
+lsblk -f "$DEVICE"
 read -p "lv groups correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
 pacstrap /mnt $PACSTRAP_PACKAGES --noconfirm
 genfstab -U -p /mnt > /mnt/etc/fstab

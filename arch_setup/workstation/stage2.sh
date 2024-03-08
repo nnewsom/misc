@@ -26,15 +26,16 @@ PACKAGES=\
 "i3status man python-pip python-virtualenv "\
 "strace polkit keepassxc rustup pulseaudio "\
 "python-notify2 python-psutil syslog-ng dunst "\
-"pasystray openbsd-netcat socat"
+"pasystray openssh openbsd-netcat socat"
 
 # set up initram fs
 cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.bak
 echo 'adding `encrypt` and `lvm2` to hooks between `block` and `filesystems`'
-egrep ^HOOKS /etc/mkinitcpio.conf
+grep -E ^HOOKS /etc/mkinitcpio.conf > /tmp/mkinitcpio.1.tmp
 # need to add `encrypt` and `lvm2` after `block` but before `filesystems`
 sed -i 's/block filesystems/block encrypt lvm2 filesystems/g' /etc/mkinitcpio.conf
-egrep ^HOOKS /etc/mkinitcpio.conf
+grep -E ^HOOKS /etc/mkinitcpio.conf >> /tmp/mkinitcpio.2.tmp
+diff --color /tmp/mkinitcpio.1.tmp /tmp/mkinitcpio.2.tmp
 read -p "modification correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
 mkinitcpio -v -p linux
 
@@ -47,14 +48,14 @@ if [[ $confirm != [nN] ]]
         grub-install --target=x86_64-efi --efi-directory=/boot/ --bootloader-id=GRUB
         cp /etc/default/grub /etc/default/grub.bak
         echo "adding cryptdevice to grub cmdline"
-        egrep ^GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub
+        grep ^GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub
 
         # the `REPLACEMEBOOT` tag will be replaced by stage1 to target the UUID of the crypt device
         sed -i \
             's,GRUB_CMDLINE_LINUX_DEFAULT=",GRUB_CMDLINE_LINUX_DEFAULT="REPLACEMEBOOT_OPTIONSREPLACEME ,g' \
             /etc/default/grub
 
-        egrep ^GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub
+        grep ^GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub
         read -p "boot config correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
         grub-mkconfig -o /boot/grub/grub.cfg
     else
@@ -86,9 +87,11 @@ EOF
 fi
 
 # set sytsem information
+## setting hostname doesn't work right now. needs systemd as pid 1
 # hostname
-read -p "hostname: " hostname
-hostnamectl set-hostname "$hostname"
+# read -p "hostname: " hostname
+# hostnamectl set-hostname "$hostname"
+
 # root password
 echo "setup root password"
 until passwd root
@@ -186,8 +189,7 @@ cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
 wget 'https://archlinux.org/mirrorlist/?country=US&protocol=https&ip_version=4' \
 -O /etc/pacman.d/mirrorlist.new
 
-cat -v /etc/pacman.d/mirrorlist.new | \
-egrep "(rackspace.com|kernel.org)/" | \
+grep -E "(rackspace.com|kernel.org)/" /etc/pacman.d/mirrorlist.new  | \
 tr -d '#' > /etc/pacman.d/mirrorlist.new.2
 
 rankmirrors -n 6 /etc/pacman.d/mirrorlist.new.2 > /etc/pacman.d/mirrorlist
@@ -221,13 +223,21 @@ fi
 # this doesn't enable clipboard, drag drop etc
 # those will need to be enabled manually with `VBoxClient --clipboard`
 
-read -p "virtualbox vm? (y/N): " confirm
+read -p "qemu vm? (y/N): " confirm
 if [[ $confirm == [yY] ]]
     then
-        pacman -S virtualbox-guest-utils --noconfirm
-        systemctl enable vboxservice
-        echo 'add `VBoxClient` commands to rc file to enable services on by default'
+        pacman -S spice-vdagent --noconfirm
+        systemctl enable sshd
+else
+    read -p "virtualbox vm? (y/N): " confirm
+    if [[ $confirm == [yY] ]]
+        then
+            pacman -S virtualbox-guest-utils --noconfirm
+            systemctl enable vboxservice
+            systemctl enable sshd
+            echo 'add `VBoxClient` commands to rc file to enable services on by default'
 
+    fi
 fi
 
 read -p "add xfce? (y/N): " confirm
