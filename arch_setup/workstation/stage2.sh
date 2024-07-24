@@ -26,7 +26,8 @@ PACKAGES=\
 "i3status man python-pip python-virtualenv "\
 "strace polkit keepassxc rustup pulseaudio "\
 "python-notify2 python-psutil syslog-ng dunst "\
-"pasystray openssh openbsd-netcat socat"
+"pasystray openssh openbsd-netcat socat "\
+"apparmor terminator"
 
 # set up initram fs
 cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.bak
@@ -166,6 +167,7 @@ set foldlevelstart=10
 set rnu
 set number
 set mouse=a
+set colorcolumn=80
 EOF
 chown "$username":"$username" "$VIMRC"
 
@@ -206,16 +208,21 @@ sed -i 's/umask 022/umask 027/g' /etc/profile
 # enable network manager
 systemctl enable NetworkManager
 
+# enable log services
+systemctl enable auditd
+systemctl enable syslog-ng@default.service
+
 # Setups up configuration and common scripts from misc repo
 read -p "set up configurations and copy scripts for misc? (Y/n): " confirm
 if [[ $confirm == [yY] ]]
     then
         cd /tmp
         git clone --depth 1 https://github.com/nnewsom/misc.git
-        mkdir -p "$USER_HOMEDIR/.config"
+        mkdir -p "$USER_HOMEDIR/.config/terminator"
         cp -r misc/i3 "$USER_HOMEDIR/.config/"
         cp -r misc/x11/Xresources "$USER_HOMEDIR/.Xresources"
         cp -r misc/scripts "$USER_HOMEDIR/"
+        cp -r misc/terminator/config "$USER_HOMEDIR/.config/terminator/"
         chown -R "$username":"$username" "$USER_HOMEDIR"
 fi
 
