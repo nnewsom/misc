@@ -1,4 +1,4 @@
-# Last Modified: Tue May  2 16:17:06 2023
+# Last Modified: Sun Jun 30 13:55:02 2024
 include <tunables/global>
 
 # vim:syntax=apparmor
@@ -20,6 +20,8 @@ include <tunables/global>
   capability sys_admin,
   capability sys_ptrace,
 
+  deny ptrace trace peer=/usr/bin/firefox,
+
   deny owner /home/*/.bash_logout r,
   deny owner /home/*/.gdb_history r,
   deny owner /home/*/.gdbinit r,
@@ -40,6 +42,7 @@ include <tunables/global>
   /dev/ r,
   /dev/dri/ r,
   /dev/dri/* rw,
+  /dev/hidraw2 rw,
   /dev/nvidia-modeset rw,
   /dev/nvidia0 rw,
   /dev/nvidiactl rw,
@@ -63,7 +66,10 @@ include <tunables/global>
   /etc/pulse/client.conf r,
   /etc/resolv.conf r,
   /proc/** r,
+  /sys/bus/ r,
   /sys/bus/pci/devices/ r,
+  /sys/class/ r,
+  /sys/class/hidraw/ r,
   /sys/devices/** r,
   /sys/fs/cgroup/user.slice/** r,
   /usr/bin/bash ix,
@@ -75,6 +81,9 @@ include <tunables/global>
   /usr/bin/sed mrix,
   /usr/bin/tr mrix,
   /usr/lib/firefox/firefox mrix,
+  /usr/lib/firefox/glxtest mrix,
+  /usr/lib/firefox/minidump-analyzer mrix,
+  /usr/lib/firefox/vaapitest mrix,
   /usr/share/** r,
   /var/cache/fontconfig/ w,
   /var/cache/fontconfig/* r,
@@ -90,6 +99,7 @@ include <tunables/global>
   owner /home/*/.cache/mesa_shader_cache/* rw,
   owner /home/*/.cache/mesa_shader_cache/** r,
   owner /home/*/.cache/mesa_shader_cache/** wk,
+  owner /home/*/.cache/mozilla/** k,
   owner /home/*/.cache/mozilla/** rw,
   owner /home/*/.cache/nvidia/GLCache/ r,
   owner /home/*/.cache/nvidia/GLCache/** rwk,
@@ -109,10 +119,12 @@ include <tunables/global>
   owner /home/*/.local/share/mime/globs2 r,
   owner /home/*/.local/share/mime/magic r,
   owner /home/*/.local/share/mime/mime.cache r,
+  owner /home/*/.mozilla/** m,
   owner /home/*/.mozilla/** r,
   owner /home/*/.mozilla/** wk,
   owner /home/*/.pulse-cookie r,
   owner /home/*/Downloads/ r,
+  owner /home/*/Downloads/* r,
   owner /home/*/Downloads/* w,
   owner /proc/** w,
   owner /run/user/1000/dconf/user rw,
