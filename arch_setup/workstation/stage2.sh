@@ -191,6 +191,7 @@ gpasswd -a "$username" audit
 timedatectl set-timezone America/Los_Angeles
 
 # pick fatest local US mirrors
+echo "setting up mirror list. can take some time to rank on speed"
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
 wget 'https://archlinux.org/mirrorlist/?country=US&protocol=https&ip_version=4' \
 -O /etc/pacman.d/mirrorlist.new
@@ -198,7 +199,8 @@ wget 'https://archlinux.org/mirrorlist/?country=US&protocol=https&ip_version=4' 
 #grep -E "(rackspace.com|kernel.org)/" /etc/pacman.d/mirrorlist.new  | \
 #tr -d '#' > /etc/pacman.d/mirrorlist.new.2
 
-rankmirrors -n 6 /etc/pacman.d/mirrorlist.new > /etc/pacman.d/mirrorlist
+sed -i 's/^#//g' /etc/pacman.d/mirrorlist.new
+rankmirrors -n 10 /etc/pacman.d/mirrorlist.new > /etc/pacman.d/mirrorlist
 pacman -Sy
 
 # set system locale to en_US.UTF-8
@@ -218,7 +220,7 @@ systemctl enable auditd
 systemctl enable syslog-ng@default.service
 
 # Setups up configuration and common scripts from misc repo
-read -p "set up configurations and copy scripts for misc? (Y/n): " confirm
+read -p "set up configurations and copy scripts for misc? (y/N): " confirm
 if [[ $confirm == [yY] ]]
     then
         cd /tmp
@@ -232,10 +234,17 @@ if [[ $confirm == [yY] ]]
         chown -R "$username":"$username" "$USER_HOMEDIR"
 fi
 
+# set up apparmor profiles for whats in the repo
+read -p "enable and setup apparmor profiles? (y/N)"
+if [[ $confirm == [yY] ]]
+    then
+        cp misc/apparmor.d/* /etc/apparmor.d/
+        systemctl enable apparmor
+fi
+
 # set up virtualbox guest and enable core service
 # this doesn't enable clipboard, drag drop etc
 # those will need to be enabled manually with `VBoxClient --clipboard`
-
 read -p "qemu vm? (y/N): " confirm
 if [[ $confirm == [yY] ]]
     then
@@ -261,9 +270,9 @@ if [[ $confirm == [yY] ]]
 fi
 
 read -p "virtmanager? (y/N): " confirm
-if [[ $confirm == [y/Y] ]]
+if [[ $confirm == [yY] ]]
     then
-        pacman -S "$QEMU_PACKAGES" --noconfirm
+        pacman -S $QEMU_PACKAGES --noconfirm
         systemctl enable libvirtd.service
         echo 'unix_sock_group = "libvirt"' >> /etc/libvirt/libvirtd.conf
         echo 'unix_sock_rw_perms = "0770"' >> /etc/libvirt/libvirtd.conf
