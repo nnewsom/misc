@@ -34,8 +34,8 @@ floating_modifier $mod
 
 # start a terminal
 bindsym $mod+Shift+Return exec xfce4-terminal
-bindsym $mod+Return exec xterm
-#bindsym $mod+Return exec terminator -u
+#bindsym $mod+Return exec xterm
+bindsym $mod+Return exec terminator -u
 #bindsym $mod+Return exec urxvt
 
 # kill focused window
@@ -230,7 +230,8 @@ bar {
 
 # settings/background
 ## disable's touchpad since I use tracpoint
-exec --no-startup-id synclient TouchpadOff=1
+# exec --no-startup-id synclient TouchpadOff=1
+
 # exec --no-startup-id xrandr --output HDMI-0 --primary
 # exec --no-startup-id pulseaudio --start
 
@@ -238,7 +239,7 @@ exec --no-startup-id synclient TouchpadOff=1
 exec --no-startup-id /usr/bin/dunst
 
 # apparmor denial notifications
-exec --no-startup-id /usr/bin/aa-notify -p -s -1 -w 1 -f /var/log/messages.log
+exec --no-startup-id /usr/bin/aa-notify -p -s -1 -w 1 -f /var/log/audit/audit.log
 
 # systray network manager controls
 exec --no-startup-id nm-applet
