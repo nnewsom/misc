@@ -56,7 +56,8 @@ include <tunables/global>
   owner /opt/tools/obsidian/** m,
   owner /opt/tools/obsidian/** r,
   owner /opt/tools/obsidian/libffmpeg.so mr,
-  owner /home/*/vaults/** rw,
+  owner @{HOME}/*/vaults/** rw,
+  owner @{HOME}/ r,
   owner /proc/** r,
   owner /proc/** w,
 
