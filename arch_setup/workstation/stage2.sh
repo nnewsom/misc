@@ -175,6 +175,17 @@ set colorcolumn=97
 EOF
 chown "$username":"$username" "$VIMRC"
 
+# pick fatest local US mirrors
+# do this before installing all the packages
+echo "setting up mirror list. can take some time to rank on speed"
+cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
+wget 'https://archlinux.org/mirrorlist/?country=US&protocol=https&ip_version=4' \
+-O /etc/pacman.d/mirrorlist.new
+
+sed -i 's/^#//g' /etc/pacman.d/mirrorlist.new
+rankmirrors -n 10 /etc/pacman.d/mirrorlist.new > /etc/pacman.d/mirrorlist
+pacman -Sy
+
 # install desired base packages
 pacman -S $PACKAGES --noconfirm
 
@@ -190,19 +201,6 @@ gpasswd -a "$username" audit
 # set up timezone
 timedatectl set-timezone America/Los_Angeles
 
-# pick fatest local US mirrors
-echo "setting up mirror list. can take some time to rank on speed"
-cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
-wget 'https://archlinux.org/mirrorlist/?country=US&protocol=https&ip_version=4' \
--O /etc/pacman.d/mirrorlist.new
-
-#grep -E "(rackspace.com|kernel.org)/" /etc/pacman.d/mirrorlist.new  | \
-#tr -d '#' > /etc/pacman.d/mirrorlist.new.2
-
-sed -i 's/^#//g' /etc/pacman.d/mirrorlist.new
-rankmirrors -n 10 /etc/pacman.d/mirrorlist.new > /etc/pacman.d/mirrorlist
-pacman -Sy
-
 # set system locale to en_US.UTF-8
 echo "en_US.UTF-8 UTF-8 >> /etc/locale.gen"
 locale-gen
@@ -216,6 +214,7 @@ echo "umask 027" >> /etc/profile.d/umask.sh
 systemctl enable NetworkManager
 
 # enable log services
+sed -i 's/log_group = root/log_group = audit/g' /etc/audit/auditd.conf
 systemctl enable auditd
 systemctl enable syslog-ng@default.service
 
