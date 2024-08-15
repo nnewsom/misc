@@ -27,7 +27,11 @@ PACKAGES=\
 "strace polkit keepassxc rustup pulseaudio "\
 "python-notify2 python-psutil syslog-ng dunst "\
 "pasystray openssh openbsd-netcat socat "\
-"apparmor terminator"
+"apparmor terminator arandr"
+
+QEMU_PACKAGES=\
+"qemu-desktop virt-manager virt-viewer dnsmasq vde2 bridge-utils "\
+"openbsd-netcat dmidecode libguestfs"
 
 # set up initram fs
 cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.bak
@@ -167,7 +171,7 @@ set foldlevelstart=10
 set rnu
 set number
 set mouse=a
-set colorcolumn=80
+set colorcolumn=97
 EOF
 chown "$username":"$username" "$VIMRC"
 
@@ -191,10 +195,10 @@ cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
 wget 'https://archlinux.org/mirrorlist/?country=US&protocol=https&ip_version=4' \
 -O /etc/pacman.d/mirrorlist.new
 
-grep -E "(rackspace.com|kernel.org)/" /etc/pacman.d/mirrorlist.new  | \
-tr -d '#' > /etc/pacman.d/mirrorlist.new.2
+#grep -E "(rackspace.com|kernel.org)/" /etc/pacman.d/mirrorlist.new  | \
+#tr -d '#' > /etc/pacman.d/mirrorlist.new.2
 
-rankmirrors -n 6 /etc/pacman.d/mirrorlist.new.2 > /etc/pacman.d/mirrorlist
+rankmirrors -n 6 /etc/pacman.d/mirrorlist.new > /etc/pacman.d/mirrorlist
 pacman -Sy
 
 # set system locale to en_US.UTF-8
@@ -202,8 +206,9 @@ echo "en_US.UTF-8 UTF-8 >> /etc/locale.gen"
 locale-gen
 echo "LANG=en_US.UTF-8 > /etc/locale.conf"
 
-# set system default umask to 027 ( rwxrw----- )
-sed -i 's/umask 022/umask 027/g' /etc/profile
+# set system default umask to 027 ( rwxr------ )
+## sed -i 's/umask 022/umask 027/g' /etc/profile
+echo "umask 027" >> /etc/profile.d/umask.sh
 
 # enable network manager
 systemctl enable NetworkManager
@@ -218,11 +223,12 @@ if [[ $confirm == [yY] ]]
     then
         cd /tmp
         git clone --depth 1 https://github.com/nnewsom/misc.git
-        mkdir -p "$USER_HOMEDIR/.config/terminator"
+        mkdir -p "$USER_HOMEDIR"/.config/{terminator,i3status}
         cp -r misc/i3 "$USER_HOMEDIR/.config/"
         cp -r misc/x11/Xresources "$USER_HOMEDIR/.Xresources"
         cp -r misc/scripts "$USER_HOMEDIR/"
         cp -r misc/terminator/config "$USER_HOMEDIR/.config/terminator/"
+        cp -r misc/i3status/config "$USER_HOMEDIR/.config/i3status/"
         chown -R "$username":"$username" "$USER_HOMEDIR"
 fi
 
@@ -252,4 +258,14 @@ if [[ $confirm == [yY] ]]
     then
         pacman -S xfce4 xfce4-goodies --noconfirm
         echo "Don't forget to change xinit if you want this as default"
+fi
+
+read -p "virtmanager? (y/N): " confirm
+if [[ $confirm == [y/Y] ]]
+    then
+        pacman -S "$QEMU_PACKAGES" --noconfirm
+        systemctl enable libvirtd.service
+        echo 'unix_sock_group = "libvirt"' >> /etc/libvirt/libvirtd.conf
+        echo 'unix_sock_rw_perms = "0770"' >> /etc/libvirt/libvirtd.conf
+        usermod -a -G libvirt  "$username"
 fi
