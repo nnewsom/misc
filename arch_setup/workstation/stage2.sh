@@ -47,48 +47,47 @@ mkinitcpio -v -p linux
 # install bootloader
 read -p "install grub? note: if no grub, will install systemd-boot (Y/n): " confirm
 if [[ $confirm != [nN] ]]
-    then
-        # install grub
-        pacman -S grub efibootmgr intel-ucode --noconfirm
-        grub-install --target=x86_64-efi --efi-directory=/boot/ --bootloader-id=GRUB
-        cp /etc/default/grub /etc/default/grub.bak
-        echo "adding cryptdevice to grub cmdline"
-        grep ^GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub
+then
+    # install grub
+    pacman -S grub efibootmgr intel-ucode --noconfirm
+    grub-install --target=x86_64-efi --efi-directory=/boot/ --bootloader-id=GRUB
+    cp /etc/default/grub /etc/default/grub.bak
+    echo "adding cryptdevice to grub cmdline"
+    grep ^GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub
 
-        # the `REPLACEMEBOOT` tag will be replaced by stage1 to target the UUID of the crypt device
-        sed -i \
-            's,GRUB_CMDLINE_LINUX_DEFAULT=",GRUB_CMDLINE_LINUX_DEFAULT="REPLACEMEBOOT_OPTIONSREPLACEME ,g' \
-            /etc/default/grub
+    # the `REPLACEMEBOOT` tag will be replaced by stage1 to target the UUID of the crypt device
+    sed -i \
+        's,GRUB_CMDLINE_LINUX_DEFAULT=",GRUB_CMDLINE_LINUX_DEFAULT="REPLACEMEBOOT_OPTIONSREPLACEME ,g' \
+        /etc/default/grub
 
-        grep ^GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub
-        read -p "boot config correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
-        grub-mkconfig -o /boot/grub/grub.cfg
-    else
-        # install systemdboot
-        LOADER_FILE="/boot/loader/loader.conf"
-        BOOTCONF_FILE="/boot/loader/entries/arch.conf"
-        pacman -S efibootmgr intel-ucode --noconfirm
-        bootctl install
-        cat << EOF >> "$LOADER_FILE"
+    grep ^GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub
+    read -p "boot config correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
+    grub-mkconfig -o /boot/grub/grub.cfg
+else
+    # install systemdboot
+    LOADER_FILE="/boot/loader/loader.conf"
+    BOOTCONF_FILE="/boot/loader/entries/arch.conf"
+    pacman -S efibootmgr intel-ucode --noconfirm
+    bootctl install
+    cat << EOF >> "$LOADER_FILE"
 default arch.conf
 timeout 0
 console-mode max
 editor no
 EOF
-        # the `REPLACEMEBOOT` tag will be replaced by stage1 to target the UUID of the crypt device
-        # enable boot with apparmor on by default, enable all kernel procs to be auditable
-        cat << EOF >> "$BOOTCONF_FILE"
+    # the `REPLACEMEBOOT` tag will be replaced by stage1 to target the UUID of the crypt device
+    # enable boot with apparmor on by default, enable all kernel procs to be auditable
+    cat << EOF >> "$BOOTCONF_FILE"
 title arch linux
 linux /vmlinuz-linux
 initrd /intel-ucode.img
 initrd /initramfs-linux.img
 options REPLACEMEBOOT_OPTIONSREPLACEME lsm=landlock,lockdown,yama,integrity,apparmor,bpf audit=1 rw
 EOF
-        echo "$BOOTCONF_FILE"
-        cat "$BOOTCONF_FILE"
-        echo ""
-        read -p "boot config correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
-
+    echo "$BOOTCONF_FILE"
+    cat "$BOOTCONF_FILE"
+    echo ""
+    read -p "boot config correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
 fi
 
 # set sytsem information
@@ -179,11 +178,16 @@ chown "$username":"$username" "$VIMRC"
 # do this before installing all the packages
 echo "setting up mirror list. can take some time to rank on speed"
 cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
-wget 'https://archlinux.org/mirrorlist/?country=US&protocol=https&ip_version=4' \
--O /etc/pacman.d/mirrorlist.new
+curl 'https://archlinux.org/mirrorlist/?country=US&protocol=https&ip_version=4' > /etc/pacman.d/mirrorlist.new
 
 sed -i 's/^#//g' /etc/pacman.d/mirrorlist.new
 rankmirrors -n 10 /etc/pacman.d/mirrorlist.new > /etc/pacman.d/mirrorlist
+if test "$(wc -l < /etc/pacman.d/mirrorlist)" -eq 0
+then
+    echo "failed to setup mirriors. restoring default"
+    cp /etc/pacman.d/mirrorlist.backup /etc/pacman.d/mirrorlist
+fi
+
 pacman -Sy
 
 # install desired base packages
@@ -221,24 +225,24 @@ systemctl enable syslog-ng@default.service
 # Setups up configuration and common scripts from misc repo
 read -p "set up configurations and copy scripts for misc? (y/N): " confirm
 if [[ $confirm == [yY] ]]
-    then
-        cd /tmp
-        git clone --depth 1 https://github.com/nnewsom/misc.git
-        mkdir -p "$USER_HOMEDIR"/.config/{terminator,i3status}
-        cp -r misc/i3 "$USER_HOMEDIR/.config/"
-        cp -r misc/x11/Xresources "$USER_HOMEDIR/.Xresources"
-        cp -r misc/scripts "$USER_HOMEDIR/"
-        cp -r misc/terminator/config "$USER_HOMEDIR/.config/terminator/"
-        cp -r misc/i3status/config "$USER_HOMEDIR/.config/i3status/"
-        chown -R "$username":"$username" "$USER_HOMEDIR"
+then
+    cd /tmp
+    git clone --depth 1 https://github.com/nnewsom/misc.git
+    mkdir -p "$USER_HOMEDIR"/.config/{terminator,i3status}
+    cp -r misc/i3 "$USER_HOMEDIR/.config/"
+    cp -r misc/x11/Xresources "$USER_HOMEDIR/.Xresources"
+    cp -r misc/scripts "$USER_HOMEDIR/"
+    cp -r misc/terminator/config "$USER_HOMEDIR/.config/terminator/"
+    cp -r misc/i3status/config "$USER_HOMEDIR/.config/i3status/"
+    chown -R "$username":"$username" "$USER_HOMEDIR"
 fi
 
 # set up apparmor profiles for whats in the repo
 read -p "enable and setup apparmor profiles? (y/N)"
 if [[ $confirm == [yY] ]]
-    then
-        cp misc/apparmor.d/* /etc/apparmor.d/
-        systemctl enable apparmor
+then
+    cp misc/apparmor.d/* /etc/apparmor.d/
+    systemctl enable apparmor
 fi
 
 # set up virtualbox guest and enable core service
@@ -246,34 +250,33 @@ fi
 # those will need to be enabled manually with `VBoxClient --clipboard`
 read -p "qemu vm? (y/N): " confirm
 if [[ $confirm == [yY] ]]
-    then
-        pacman -S spice-vdagent --noconfirm
-        systemctl enable sshd
+then
+    pacman -S spice-vdagent --noconfirm
+    systemctl enable sshd
 else
     read -p "virtualbox vm? (y/N): " confirm
     if [[ $confirm == [yY] ]]
-        then
-            pacman -S virtualbox-guest-utils --noconfirm
-            systemctl enable vboxservice
-            systemctl enable sshd
-            echo 'add `VBoxClient` commands to rc file to enable services on by default'
-
+    then
+        pacman -S virtualbox-guest-utils --noconfirm
+        systemctl enable vboxservice
+        systemctl enable sshd
+        echo 'add `VBoxClient` commands to rc file to enable services on by default'
     fi
 fi
 
 read -p "add xfce? (y/N): " confirm
 if [[ $confirm == [yY] ]]
-    then
-        pacman -S xfce4 xfce4-goodies --noconfirm
-        echo "Don't forget to change xinit if you want this as default"
+then
+    pacman -S xfce4 xfce4-goodies --noconfirm
+    echo "Don't forget to change xinit if you want this as default"
 fi
 
 read -p "virtmanager? (y/N): " confirm
 if [[ $confirm == [yY] ]]
-    then
-        pacman -S $QEMU_PACKAGES --noconfirm
-        systemctl enable libvirtd.service
-        echo 'unix_sock_group = "libvirt"' >> /etc/libvirt/libvirtd.conf
-        echo 'unix_sock_rw_perms = "0770"' >> /etc/libvirt/libvirtd.conf
-        usermod -a -G libvirt  "$username"
+then
+    pacman -S $QEMU_PACKAGES --noconfirm
+    systemctl enable libvirtd.service
+    echo 'unix_sock_group = "libvirt"' >> /etc/libvirt/libvirtd.conf
+    echo 'unix_sock_rw_perms = "0770"' >> /etc/libvirt/libvirtd.conf
+    usermod -a -G libvirt  "$username"
 fi
