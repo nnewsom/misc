@@ -27,7 +27,7 @@ PACKAGES=\
 "strace polkit keepassxc rustup pulseaudio "\
 "python-notify2 python-psutil syslog-ng dunst "\
 "pasystray openssh openbsd-netcat socat "\
-"apparmor terminator arandr"
+"apparmor terminator arandr iptables less"
 
 QEMU_PACKAGES=\
 "qemu-desktop virt-manager virt-viewer dnsmasq vde2 bridge-utils "\
@@ -47,7 +47,7 @@ mkinitcpio -v -p linux
 # install systemdboot
 LOADER_FILE="/boot/loader/loader.conf"
 BOOTCONF_FILE="/boot/loader/entries/arch.conf"
-pacman -S efibootmgr intel-ucode --noconfirm
+pacman -S efibootmgr --noconfirm
 bootctl install
 cat << EOF >> "$LOADER_FILE"
 default arch.conf
@@ -62,18 +62,33 @@ title arch linux
 linux /vmlinuz-linux
 initrd /intel-ucode.img
 initrd /initramfs-linux.img
-options REPLACEMEBOOT_OPTIONSREPLACEME lsm=landlock,lockdown,yama,integrity,apparmor,bpf audit=1 rw
+options REPLACEMEBOOT_OPTIONSREPLACEME lsm=landlock,lockdown,yama,integrity,apparmor,bpf audit=1 ipv6.disable=1 rw
 EOF
-echo "$BOOTCONF_FILE"
-cat "$BOOTCONF_FILE"
-echo ""
-read -p "boot config correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
+if grep -q  "REPLACE" "$BOOTCONF_FILE"
+    then
+        echo "stage2 bootconf file not modified correctly. exiting"
+        exit 1
+fi
+# echo "$BOOTCONF_FILE"
+# cat "$BOOTCONF_FILE"
+# echo ""
+# read -p "boot config correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
 
 # set sytsem information
 ## setting hostname doesn't work right now. needs systemd as pid 1
 # hostname
 # read -p "hostname: " hostname
 # hostnamectl set-hostname "$hostname"
+
+# set up basic ipv4 firewall
+iptables -A INPUT -j ACCEPT -i lo -s 127.0.0.0/8 -d 127.0.0.0/8
+iptables -A INPUT -j ACCEPT -m state --state RELATED,ESTABLISHED
+iptables -A INPUT -j DROP
+iptables-save -f /etc/iptables/iptables.rules
+systemctl enable iptables
+
+# disable ipv6
+sysctl net.ipv6 | grep disable_ipv6 | sed 's/= 0/= 1/g' >> /etc/sysctl.d/40-disable-ipv6.conf
 
 # root password
 echo "setup root password"
