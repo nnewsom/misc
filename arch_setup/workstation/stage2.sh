@@ -44,51 +44,30 @@ diff --color /tmp/mkinitcpio.1.tmp /tmp/mkinitcpio.2.tmp
 read -p "modification correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
 mkinitcpio -v -p linux
 
-# install bootloader
-read -p "install grub? note: if no grub, will install systemd-boot (Y/n): " confirm
-if [[ $confirm != [nN] ]]
-then
-    # install grub
-    pacman -S grub efibootmgr intel-ucode --noconfirm
-    grub-install --target=x86_64-efi --efi-directory=/boot/ --bootloader-id=GRUB
-    cp /etc/default/grub /etc/default/grub.bak
-    echo "adding cryptdevice to grub cmdline"
-    grep ^GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub
-
-    # the `REPLACEMEBOOT` tag will be replaced by stage1 to target the UUID of the crypt device
-    sed -i \
-        's,GRUB_CMDLINE_LINUX_DEFAULT=",GRUB_CMDLINE_LINUX_DEFAULT="REPLACEMEBOOT_OPTIONSREPLACEME ,g' \
-        /etc/default/grub
-
-    grep ^GRUB_CMDLINE_LINUX_DEFAULT /etc/default/grub
-    read -p "boot config correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
-    grub-mkconfig -o /boot/grub/grub.cfg
-else
-    # install systemdboot
-    LOADER_FILE="/boot/loader/loader.conf"
-    BOOTCONF_FILE="/boot/loader/entries/arch.conf"
-    pacman -S efibootmgr intel-ucode --noconfirm
-    bootctl install
-    cat << EOF >> "$LOADER_FILE"
+# install systemdboot
+LOADER_FILE="/boot/loader/loader.conf"
+BOOTCONF_FILE="/boot/loader/entries/arch.conf"
+pacman -S efibootmgr intel-ucode --noconfirm
+bootctl install
+cat << EOF >> "$LOADER_FILE"
 default arch.conf
 timeout 0
 console-mode max
 editor no
 EOF
-    # the `REPLACEMEBOOT` tag will be replaced by stage1 to target the UUID of the crypt device
-    # enable boot with apparmor on by default, enable all kernel procs to be auditable
-    cat << EOF >> "$BOOTCONF_FILE"
+# the `REPLACEMEBOOT` tag will be replaced by stage1 to target the UUID of the crypt device
+# enable boot with apparmor on by default, enable all kernel procs to be auditable
+cat << EOF >> "$BOOTCONF_FILE"
 title arch linux
 linux /vmlinuz-linux
 initrd /intel-ucode.img
 initrd /initramfs-linux.img
 options REPLACEMEBOOT_OPTIONSREPLACEME lsm=landlock,lockdown,yama,integrity,apparmor,bpf audit=1 rw
 EOF
-    echo "$BOOTCONF_FILE"
-    cat "$BOOTCONF_FILE"
-    echo ""
-    read -p "boot config correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
-fi
+echo "$BOOTCONF_FILE"
+cat "$BOOTCONF_FILE"
+echo ""
+read -p "boot config correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
 
 # set sytsem information
 ## setting hostname doesn't work right now. needs systemd as pid 1
@@ -238,7 +217,7 @@ then
 fi
 
 # set up apparmor profiles for whats in the repo
-read -p "enable and setup apparmor profiles? (y/N)"
+read -p "enable and setup apparmor profiles? (y/N)" confirm
 if [[ $confirm == [yY] ]]
 then
     cp misc/apparmor.d/* /etc/apparmor.d/
@@ -248,20 +227,11 @@ fi
 # set up virtualbox guest and enable core service
 # this doesn't enable clipboard, drag drop etc
 # those will need to be enabled manually with `VBoxClient --clipboard`
-read -p "qemu vm? (y/N): " confirm
+read -p "qemu guest vm? (y/N): " confirm
 if [[ $confirm == [yY] ]]
 then
     pacman -S spice-vdagent --noconfirm
     systemctl enable sshd
-else
-    read -p "virtualbox vm? (y/N): " confirm
-    if [[ $confirm == [yY] ]]
-    then
-        pacman -S virtualbox-guest-utils --noconfirm
-        systemctl enable vboxservice
-        systemctl enable sshd
-        echo 'add `VBoxClient` commands to rc file to enable services on by default'
-    fi
 fi
 
 read -p "add xfce? (y/N): " confirm

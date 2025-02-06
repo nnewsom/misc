@@ -32,7 +32,12 @@ echo -e "target: $DEVICE\nEFI: $PART_EFI\nLVM: $PART_LVM"
 INSTALL_PACKAGES="arch-install-scripts"
 PACSTRAP_PACKAGES=\
 "base base-devel efibootmgr vim dialog xterm btrfs-progs "\
-"grub mkinitcpio linux linux-firmware lvm2 pacman-contrib intel-ucode"
+"mkinitcpio linux linux-firmware lvm2 pacman-contrib"
+MICRO_CODE="intel-ucode"
+if [ `lscpu | grep -i intel | wc -l` -eq 0 ]
+    then
+        MICRO_CODE="amd-ucode"
+fi
 
 pacman -Sy
 pacman -S $INSTALL_PACKAGES --noconfirm
@@ -81,7 +86,7 @@ mount "$PART_EFI" /mnt/boot
 
 lsblk -f "$DEVICE"
 read -p "lv groups correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
-pacstrap /mnt $PACSTRAP_PACKAGES --noconfirm
+pacstrap /mnt $PACSTRAP_PACKAGES $MICRO_CODE --noconfirm
 genfstab -U -p /mnt > /mnt/etc/fstab
 
 cp ./stage2.sh /mnt/stage2.sh
