@@ -217,7 +217,7 @@ then
 fi
 
 # set up apparmor profiles for whats in the repo
-read -p "enable and setup apparmor profiles? (y/N)" confirm
+read -p "enable and setup apparmor profiles? (y/N): " confirm
 if [[ $confirm == [yY] ]]
 then
     cp misc/apparmor.d/* /etc/apparmor.d/
