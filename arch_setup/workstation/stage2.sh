@@ -4,20 +4,23 @@
 # the script will do the following:
 # * install bootloader
 # * create and install initramfs
-# * set hostname
+# * setup firewall
 # * set root passwd
 # * create limited user and set passwd
-# * setup local .rc files to user
 # * install packages listed in `PACKAGES`
 # * set timezone to US/los_angeles
-# * pick 6 fastest local US mirrors for pacman
 # * set local to en_US.UTF-8
 # * set system default umask
 # * enable networkmanager service
-# * install virtualbox guest if in vm (optional)
+# * [optional] pick fastest local US mirrors for pacman
+# * [optional] setup local .rc files to user
+# * [optional] setup qemu virtmanager
+# * [optional] setup qemu guest vm
+# * [optional] setup qemu guest vm
+# * [optional] setup xfce4 env
 
 PACKAGES=\
-"git wget i3lock firefox xautolock "\
+"git wget firefox xautolock "\
 "wpa_supplicant networkmanager alsa-utils "\
 "ttf-dejavu ttf-liberation i3-wm i3lock "\
 "lxappearance thunar network-manager-applet "\
@@ -33,62 +36,38 @@ QEMU_PACKAGES=\
 "qemu-desktop virt-manager virt-viewer dnsmasq vde2 bridge-utils "\
 "openbsd-netcat dmidecode libguestfs"
 
-# set up initram fs
-cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.bak
-echo 'adding `encrypt` and `lvm2` to hooks between `block` and `filesystems`'
-grep -E ^HOOKS /etc/mkinitcpio.conf > /tmp/mkinitcpio.1.tmp
-# need to add `encrypt` and `lvm2` after `block` but before `filesystems`
-sed -i 's/block filesystems/block encrypt lvm2 filesystems/g' /etc/mkinitcpio.conf
-grep -E ^HOOKS /etc/mkinitcpio.conf >> /tmp/mkinitcpio.2.tmp
-diff --color /tmp/mkinitcpio.1.tmp /tmp/mkinitcpio.2.tmp
-read -p "modification correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
-mkinitcpio -v -p linux
+# defaults
+QEMU_GUEST_VM=N
+INCLUDE_XFCE=N
+COPY_CONFIG_SCRIPTS=N
+INCLUDE_VIRTMANAGER=N
+ENABLE_AA_PROFILES=N
+RANK_MIRRORS=N
+LVM_UUID=""
+MICROCODE=""
 
-# install systemdboot
-LOADER_FILE="/boot/loader/loader.conf"
-BOOTCONF_FILE="/boot/loader/entries/arch.conf"
-pacman -S efibootmgr --noconfirm
-bootctl install
-cat << EOF >> "$LOADER_FILE"
-default arch.conf
-timeout 0
-console-mode max
-editor no
-EOF
-# the `REPLACEMEBOOT` tag will be replaced by stage1 to target the UUID of the crypt device
-# enable boot with apparmor on by default, enable all kernel procs to be auditable
-cat << EOF >> "$BOOTCONF_FILE"
-title arch linux
-linux /vmlinuz-linux
-initrd /intel-ucode.img
-initrd /initramfs-linux.img
-options REPLACEMEBOOT_OPTIONSREPLACEME lsm=landlock,lockdown,yama,integrity,apparmor,bpf audit=1 ipv6.disable=1 rw
-EOF
-if grep -q  "REPLACE" "$BOOTCONF_FILE"
+source stage2_settings.conf
+
+if [[ -z $LVM_UUID ]]
     then
-        echo "stage2 bootconf file not modified correctly. exiting"
+        echo "LVM UUID is missing. cannot install"
         exit 1
 fi
-# echo "$BOOTCONF_FILE"
-# cat "$BOOTCONF_FILE"
-# echo ""
-# read -p "boot config correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
 
-# set sytsem information
-## setting hostname doesn't work right now. needs systemd as pid 1
-# hostname
-# read -p "hostname: " hostname
-# hostnamectl set-hostname "$hostname"
+if [[ -z $MICROCODE ]]
+    then
+        echo "microcode is missing. cannot install"
+        exit 1
+fi
 
-# set up basic ipv4 firewall
-iptables -A INPUT -j ACCEPT -i lo -s 127.0.0.0/8 -d 127.0.0.0/8
-iptables -A INPUT -j ACCEPT -m state --state RELATED,ESTABLISHED
-iptables -A INPUT -j DROP
-iptables-save -f /etc/iptables/iptables.rules
-systemctl enable iptables
-
-# disable ipv6
-sysctl net.ipv6 | grep disable_ipv6 | sed 's/= 0/= 1/g' >> /etc/sysctl.d/40-disable-ipv6.conf
+echo "Setup config:"
+echo "include XFCE: $INCLUDE_XFCE"
+echo "include virtmanage: $INCLUDE_VIRTMANAGER"
+echo "include QEMU guest: $QEMU_GUEST_VM"
+echo "copy config+scripts: $COPY_CONFIG_SCRIPTS"
+echo "enable apparmor + profiles: $ENABLE_AA_PROFILES"
+echo "rank mirrors: $RANK_MIRRORS"
+read -p "proceed? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
 
 # root password
 echo "setup root password"
@@ -113,6 +92,50 @@ do
     echo "failed to set password. please try agian"
     sleep 2
 done
+
+# set up initram fs
+cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.bak
+echo 'adding `encrypt` and `lvm2` to hooks between `block` and `filesystems`'
+# need to add `encrypt` and `lvm2` after `block` but before `filesystems`
+sed -i 's/block filesystems/block encrypt lvm2 filesystems/g' /etc/mkinitcpio.conf
+if ! grep -q "block encrypt lvm2 filesystems" /etc/mkinitcpio.conf
+then
+    echo "failed to modify mkinitcpio"
+    exit 1
+fi
+mkinitcpio -v -p linux
+
+# install systemdboot
+LOADER_FILE="/boot/loader/loader.conf"
+BOOTCONF_FILE="/boot/loader/entries/arch.conf"
+pacman -S efibootmgr --noconfirm
+bootctl install
+cat << EOF >> "$LOADER_FILE"
+default arch.conf
+timeout 0
+console-mode max
+editor no
+EOF
+
+cat << EOF >> "$BOOTCONF_FILE"
+title arch linux
+linux /vmlinuz-linux
+initrd /$MICROCODE.img
+initrd /initramfs-linux.img
+options cryptdevice=UUID=$LVM_UUID:crypt_lvm root=/dev/mapper/arch-root lsm=landlock,lockdown,yama,integrity,apparmor,bpf audit=1 ipv6.disable=1 rw
+EOF
+
+# set up basic ipv4 firewall
+iptables -A INPUT -j ACCEPT -i lo -s 127.0.0.0/8 -d 127.0.0.0/8
+iptables -A INPUT -j ACCEPT -m state --state RELATED,ESTABLISHED
+iptables -A INPUT -j DROP
+iptables-save -f /etc/iptables/iptables.rules
+systemctl enable iptables
+
+# disable ipv6
+sysctl net.ipv6 | grep disable_ipv6 | sed 's/= 0/= 1/g' >> /etc/sysctl.d/40-disable-ipv6.conf
+
+
 
 # set up local .rc files
 USER_HOMEDIR="/home/$username"
@@ -169,17 +192,19 @@ EOF
 chown "$username":"$username" "$VIMRC"
 
 # pick fatest local US mirrors
-# do this before installing all the packages
-echo "setting up mirror list. can take some time to rank on speed"
-cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
-curl 'https://archlinux.org/mirrorlist/?country=US&protocol=https&ip_version=4' > /etc/pacman.d/mirrorlist.new
-
-sed -i 's/^#//g' /etc/pacman.d/mirrorlist.new
-rankmirrors -n 10 /etc/pacman.d/mirrorlist.new > /etc/pacman.d/mirrorlist
-if test "$(wc -l < /etc/pacman.d/mirrorlist)" -eq 0
+if [[ $RANK_MIRRORS == [yY] ]]
 then
-    echo "failed to setup mirriors. restoring default"
-    cp /etc/pacman.d/mirrorlist.backup /etc/pacman.d/mirrorlist
+    echo "setting up mirror list. can take some time to rank on speed"
+    cp /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
+    curl 'https://archlinux.org/mirrorlist/?country=US&protocol=https&ip_version=4' > /etc/pacman.d/mirrorlist.new
+
+    sed -i 's/^#//g' /etc/pacman.d/mirrorlist.new
+    rankmirrors -n 10 /etc/pacman.d/mirrorlist.new > /etc/pacman.d/mirrorlist
+    if test "$(wc -l < /etc/pacman.d/mirrorlist)" -eq 0
+    then
+        echo "failed to setup mirriors. restoring default"
+        cp /etc/pacman.d/mirrorlist.backup /etc/pacman.d/mirrorlist
+    fi
 fi
 
 pacman -Sy
@@ -217,47 +242,42 @@ systemctl enable auditd
 systemctl enable syslog-ng@default.service
 
 # Setups up configuration and common scripts from misc repo
-read -p "set up configurations and copy scripts for misc? (y/N): " confirm
-if [[ $confirm == [yY] ]]
+if [[ $COPY_CONFIG_SCRIPTS == [yY] ]]
 then
-    cd /tmp
-    git clone --depth 1 https://github.com/nnewsom/misc.git
+    if [ ! -d "/tmp/misc" ]; then
+        git clone --depth 1 https://github.com/nnewsom/misc.git /tmp/misc
+    fi
     mkdir -p "$USER_HOMEDIR"/.config/{terminator,i3status}
-    cp -r misc/i3 "$USER_HOMEDIR/.config/"
-    cp -r misc/x11/Xresources "$USER_HOMEDIR/.Xresources"
-    cp -r misc/scripts "$USER_HOMEDIR/"
-    cp -r misc/terminator/config "$USER_HOMEDIR/.config/terminator/"
-    cp -r misc/i3status/config "$USER_HOMEDIR/.config/i3status/"
+    cp -r /tmp/misc/i3 "$USER_HOMEDIR/.config/"
+    cp -r /tmp/misc/x11/Xresources "$USER_HOMEDIR/.Xresources"
+    cp -r /tmp/misc/scripts "$USER_HOMEDIR/"
+    cp -r /tmp/misc/terminator/config "$USER_HOMEDIR/.config/terminator/"
+    cp -r /tmp/misc/i3status/config "$USER_HOMEDIR/.config/i3status/"
     chown -R "$username":"$username" "$USER_HOMEDIR"
 fi
 
-# set up apparmor profiles for whats in the repo
-read -p "enable and setup apparmor profiles? (y/N): " confirm
-if [[ $confirm == [yY] ]]
+if [[ $ENABLE_AA_PROFILES == [yY] ]]
 then
-    cp misc/apparmor.d/* /etc/apparmor.d/
+    if [ ! -d "/tmp/misc" ]; then
+        git clone --depth 1 https://github.com/nnewsom/misc.git /tmp/misc
+    fi
+    cp /tmp/misc/apparmor.d/* /etc/apparmor.d/
     systemctl enable apparmor
 fi
 
-# set up virtualbox guest and enable core service
-# this doesn't enable clipboard, drag drop etc
-# those will need to be enabled manually with `VBoxClient --clipboard`
-read -p "qemu guest vm? (y/N): " confirm
-if [[ $confirm == [yY] ]]
+if [[ $QEMU_GUEST_VM == [yY] ]]
 then
     pacman -S spice-vdagent --noconfirm
     systemctl enable sshd
 fi
 
-read -p "add xfce? (y/N): " confirm
-if [[ $confirm == [yY] ]]
+if [[ $INCLUDE_XFCE == [yY] ]]
 then
     pacman -S xfce4 xfce4-goodies --noconfirm
-    echo "Don't forget to change xinit if you want this as default"
+    sed -i 's/exec i3/exec startxfce4/g' $XINITRC
 fi
 
-read -p "virtmanager? (y/N): " confirm
-if [[ $confirm == [yY] ]]
+if [[ $INCLUDE_VIRTMANAGER == [yY] ]]
 then
     pacman -S $QEMU_PACKAGES --noconfirm
     systemctl enable libvirtd.service
