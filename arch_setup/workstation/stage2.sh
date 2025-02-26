@@ -20,7 +20,7 @@
 # * [optional] setup xfce4 env
 
 PACKAGES=\
-"git wget firefox xautolock "\
+"git wget firefox xautolock cronie"\
 "wpa_supplicant networkmanager alsa-utils "\
 "ttf-dejavu ttf-liberation i3-wm i3lock "\
 "lxappearance thunar network-manager-applet "\
@@ -240,6 +240,9 @@ systemctl enable NetworkManager
 sed -i 's/log_group = root/log_group = audit/g' /etc/audit/auditd.conf
 systemctl enable auditd
 systemctl enable syslog-ng@default.service
+
+# enable cron
+systemctl enable cronie.service
 
 # Setups up configuration and common scripts from misc repo
 if [[ $COPY_CONFIG_SCRIPTS == [yY] ]]
