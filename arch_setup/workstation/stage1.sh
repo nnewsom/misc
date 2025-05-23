@@ -40,7 +40,10 @@ if [ `lscpu | grep -i intel | wc -l` -eq 0 ]
 fi
 
 pacman -Sy
-pacman -S $INSTALL_PACKAGES --noconfirm
+if ! pacman -S $INSTALL_PACKAGES --noconfirm; then
+    echo "failed to install base install packages"
+    exit 1
+fi
 
 cat << EOF | parted $DEVICE
 rm 1
@@ -86,7 +89,11 @@ mount "$PART_EFI" /mnt/boot
 
 lsblk -f "$DEVICE"
 read -p "lv groups correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
-pacstrap /mnt $PACSTRAP_PACKAGES $MICROCODE --noconfirm
+if ! pacstrap /mnt $PACSTRAP_PACKAGES $MICROCODE --noconfirm; then
+    echo "pacstrap failed"
+    exit 1
+fi
+
 genfstab -U -p /mnt > /mnt/etc/fstab
 
 cp ./stage2.sh /mnt/stage2.sh

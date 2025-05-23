@@ -248,7 +248,10 @@ exec --no-startup-id nm-applet
 exec --no-startup-id pasystray
 
 # bottom right corner for non lock mode
-exec --no-startup-id xautolock -secure -time 5 -locker "$HOME/scripts/lock_screen.sh" -corners +00- -cornerdelay 2
+# xautolock is deprecated from arch main
+# exec --no-startup-id xautolock -secure -time 5 -locker "$HOME/scripts/lock_screen.sh" -corners +00- -cornerdelay 2
+# xss-lock is triggered by values in xset
+exec --no-startup-id xss-lock -- "$HOME/scripts/lock_screen.sh"
 
 exec_always --no-startup-id feh --bg-max "$HOME/.wallpaper"
 
