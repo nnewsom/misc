@@ -28,8 +28,8 @@ PACKAGES=\
 "i3status man python-pip python-virtualenv "\
 "strace polkit keepassxc rustup pulseaudio "\
 "python-notify2 python-psutil syslog-ng dunst "\
-"pasystray openssh openbsd-netcat socat "\
-"apparmor terminator arandr iptables less"
+"pasystray openssh openbsd-netcat socat logrotate "\
+"apparmor terminator arandr iptables less pavucontrol"
 
 QEMU_PACKAGES=\
 "qemu-desktop virt-manager virt-viewer dnsmasq vde2 bridge-utils "\
@@ -90,24 +90,37 @@ function setup_users_hostname() {
 }
 
 function setup_initramfs() {
+    # mkinitcpio will fail if vconsole.conf isn't present (even if empty)
+    if [ ! -f /etc/vconsole.conf ]; then
+        echo "#KEYMAP=us" >> /etc/vconsole.conf
+    fi
     cp /etc/mkinitcpio.conf /etc/mkinitcpio.conf.bak
-    echo 'adding `encrypt` and `lvm2` to hooks between `block` and `filesystems`'
+    echo 'adding `sd-encrypt` and `lvm2` to hooks between `block` and `filesystems`'
     # need to add `encrypt` and `lvm2` after `block` but before `filesystems`
-    sed -i 's/block filesystems/block encrypt lvm2 filesystems/g' /etc/mkinitcpio.conf
-    if ! grep -q "block encrypt lvm2 filesystems" /etc/mkinitcpio.conf
+    sed -i 's/block filesystems/block sd-encrypt lvm2 filesystems/g' /etc/mkinitcpio.conf
+    if ! grep -q "block sd-encrypt lvm2 filesystems" /etc/mkinitcpio.conf
     then
-        echo "failed to modify mkinitcpio"
+        echo "failed to modify mkinitcpio conf"
         exit 1
     fi
-    mkinitcpio -v -p linux
+    if ! mkinitcpio -p linux; then
+        echo "mkinitcpio failed"
+        exit 1
+    fi
 }
 
 function setup_systemdboot() {
 # install systemdboot
     LOADER_FILE="/boot/loader/loader.conf"
     BOOTCONF_FILE="/boot/loader/entries/arch.conf"
-    pacman -S efibootmgr --noconfirm
-    bootctl install
+    if ! pacman -S efibootmgr --noconfirm; then
+        echo "failed pacman install efibootmgr"
+        exit 1
+    fi
+    if ! bootctl install; then
+        echo "bootctl install failed"
+        exit 1
+    fi
     cat << EOF >> "$LOADER_FILE"
 default arch.conf
 timeout 0
@@ -120,7 +133,7 @@ title arch linux
 linux /vmlinuz-linux
 initrd /$MICROCODE.img
 initrd /initramfs-linux.img
-options cryptdevice=UUID=$LVM_UUID:crypt_lvm root=/dev/mapper/arch-root lsm=landlock,lockdown,yama,integrity,apparmor,bpf audit=1 ipv6.disable=1 rw
+options rd.luks.name=$LVM_UUID=root root=/dev/mapper/arch-root lsm=landlock,lockdown,yama,integrity,apparmor,bpf audit=1 ipv6.disable=1 rw
 EOF
 }
 

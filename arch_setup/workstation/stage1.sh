@@ -39,9 +39,13 @@ if [ `lscpu | grep -i intel | wc -l` -eq 0 ]
         MICROCODE="amd-ucode"
 fi
 
-pacman -Sy
+if ! pacman -Sy; then
+    echo "failed: pacman init sync"
+    exit 1;
+fi
+
 if ! pacman -S $INSTALL_PACKAGES --noconfirm; then
-    echo "failed to install base install packages"
+    echo "failed: pacman install base install packages"
     exit 1
 fi
 
@@ -61,40 +65,79 @@ print
 quit
 EOF
 
-modprobe dm-crypt
-modprobe dm-mod
+if ! modprobe dm-crypt; then
+    echo "failed: modprobe dm-crypt"
+    echo 1
+fi
+
+if ! modprobe dm-mod; then
+    echo "failed: modprobe dm-mod"
+    echo 1
+fi
 
 until cryptsetup luksFormat -v -s 512 -h sha512 "$PART_LVM"
 do
-    echo "failed to luks format. please try again"
+    echo "failed: cryptsetup luks format. please try again"
     sleep 2
 done
 
 until cryptsetup open "$PART_LVM" luks_lvm
 do
-    echo "failed to open luks. please try again"
+    echo "failed: cryptsetup open luks. please try again"
     sleep 2
 done
 
-pvcreate /dev/mapper/luks_lvm
-vgcreate arch /dev/mapper/luks_lvm
-lvcreate -n root -l "$ROOT_SIZE" arch
+if ! pvcreate /dev/mapper/luks_lvm; then
+    echo "failed: pvcreate luks_lvm"
+    exit 1
+fi
 
-mkfs.fat -F32 "$PART_EFI"
-mkfs.btrfs -L root /dev/mapper/arch-root
+if ! vgcreate arch /dev/mapper/luks_lvm; then
+    echo "failed: vgcreate arch"
+    exit 1
+fi
 
-mount /dev/mapper/arch-root /mnt
-mkdir -p /mnt/boot
-mount "$PART_EFI" /mnt/boot
+if ! lvcreate -n root -l "$ROOT_SIZE" arch; then
+    echo "failed: lvcreate root"
+    exit 1
+fi
+
+if ! mkfs.fat -F32 "$PART_EFI"; then
+    echo "failed: mkfs.fat"
+    exit 1
+fi
+
+if ! mkfs.btrfs -L root /dev/mapper/arch-root; then
+    echo "failed: mkfs.btrfs"
+    exit 1
+fi
+
+if ! mount /dev/mapper/arch-root /mnt; then
+    echo "failed: mount arch-root"
+    exit 1
+fi
+
+if ! mkdir -p /mnt/boot; then
+    echo "failed: mkdir /mnt/boot"
+    exit 1
+fi
+
+if ! mount "$PART_EFI" /mnt/boot; then
+    echo "failed: mount /mnt/boot"
+    exit 1;
+fi
 
 lsblk -f "$DEVICE"
 read -p "lv groups correct? (y/N): " confirm && [[ $confirm == [yY] ]] || exit 1
 if ! pacstrap /mnt $PACSTRAP_PACKAGES $MICROCODE --noconfirm; then
-    echo "pacstrap failed"
+    echo "failed: pacstrap "
     exit 1
 fi
 
-genfstab -U -p /mnt > /mnt/etc/fstab
+if ! genfstab -U -p /mnt > /mnt/etc/fstab; then
+    echo "failed: genfstab"
+    exit 1
+fi
 
 cp ./stage2.sh /mnt/stage2.sh
 chmod +x /mnt/stage2.sh
